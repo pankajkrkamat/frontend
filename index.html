@@ -1358,102 +1358,122 @@
     const API_URL = 'https://pankajkr07-fakenewsdetector.hf.space';
 
     /* ── FIX 3: ANALYZER with proper error handling ─── */
+    /* ── FIX: Gradio 4.x correct API format ─── */
     async function analyzeContent(title, content) {
-  const endpoints = [
-    { url: `${API_URL}/api/predict`, body: { data: [title, content], api_name: '/detect_news' } },
-    { url: `${API_URL}/run/predict`, body: { data: [title, content], fn_index: 0 } },
-  ];
+      try {
+        // ── STEP 1: Submit job to /call/detect_news ──
+        const submitRes = await fetch(`${API_URL}/call/detect_news`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: [title, content] })
+        });
 
-  let lastError = null;
+        if (!submitRes.ok) throw new Error(`Submit failed: HTTP ${submitRes.status}`);
+        const { event_id } = await submitRes.json();
+        console.log('[TruthLens] event_id:', event_id);
 
-  for (const ep of endpoints) {
-    try {
-      console.log('[TruthLens] Trying:', ep.url);
-      const response = await fetch(ep.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ep.body),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // ── STEP 2: Poll result from SSE stream ──
+        const resultRes = await fetch(`${API_URL}/call/detect_news/${event_id}`);
+        if (!resultRes.ok) throw new Error(`Poll failed: HTTP ${resultRes.status}`);
 
-      const resJson = await response.json();
-      console.log('[TruthLens] Response:', resJson);
+        const text = await resultRes.text();
+        console.log('[TruthLens] SSE raw:', text);
 
-      // ✅ FIX: data[1] can be a JSON string OR object — handle both
-      let raw = resJson.data?.[1];
-      if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch {} }
+        // Parse SSE — find last "data: {...}" line
+        const dataLines = text.split('\n')
+          .filter(l => l.startsWith('data: ') && l.includes('{'));
+        if (!dataLines.length) throw new Error('No data in SSE response');
 
-      // Fallback: check data[0]
-      if (!raw?.real_probability) {
-        let raw0 = resJson.data?.[0];
-        if (typeof raw0 === 'string') { try { raw0 = JSON.parse(raw0); } catch { raw0 = null; } }
-        if (raw0?.real_probability !== undefined) raw = raw0;
+        const parsed = JSON.parse(dataLines[dataLines.length - 1].slice(6));
+        // Gradio SSE: parsed is array like [html_str, dict]
+        let data = Array.isArray(parsed) ? parsed[1] : parsed?.output?.data?.[1];
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch { } }
+
+        console.log('[TruthLens] Result dict:', data);
+        if (!data || typeof data !== 'object') throw new Error('Bad data: ' + JSON.stringify(parsed).slice(0, 150));
+        if (data.error) throw new Error(data.error);
+
+        // ── BUILD RESULT ──
+        const credibility = Math.round((data.real_probability ?? 0.5) * 100);
+        let verdict, label, color;
+        if (credibility >= 70) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
+        else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
+        else if (credibility >= 25) { verdict = 'Suspicious'; label = 'SUSPICIOUS'; color = '#ff8844'; }
+        else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
+
+        const bertFake = data.bert_fake ?? (1 - credibility / 100);
+        const bertReal = data.bert_real ?? (credibility / 100);
+        const hFake = data.heuristic_fake ?? 0;
+        const hDetail = data.heuristic_details ?? 'No flags';
+
+        const signals = [];
+        if (bertFake > 0.5) signals.push({ type: 'negative', text: `BERT: High fake probability (${(bertFake * 100).toFixed(1)}%)` });
+        else signals.push({ type: 'positive', text: `BERT: High real probability (${(bertReal * 100).toFixed(1)}%)` });
+        if (hFake > 0) signals.push({ type: 'warning', text: `Heuristic Flags: ${hDetail}` });
+        else signals.push({ type: 'positive', text: 'No heuristic red flags detected' });
+
+        return {
+          title: title || 'Untitled', domain: 'Text Analysis',
+          overall: credibility, verdict, label, color,
+          timestamp: new Date().toISOString(),
+          scores: {
+            domain: { score: Math.round((1 - hFake) * 100), label: 'Heuristic Engine', desc: hDetail },
+            content: { score: Math.round(bertReal * 100), label: 'BERT Model', desc: 'NLP Context Analysis' },
+            source: { score: credibility, label: 'Ensemble Score', desc: 'Weighted Combination' }
+          },
+          signals,
+          metadata: {
+            'Analyzed By': 'TruthLens ML API',
+            'Model': 'BERT-base-uncased (Fine-Tuned)',
+            'Confidence': `${data.confidence ?? credibility}%`,
+            'Type': 'Title & Content Analysis'
+          }
+        };
+
+      } catch (err) {
+        console.error('[TruthLens] API error:', err.message);
+        const seed = (title + content).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const rng = (mn, mx, s) => { const x = Math.sin((s * 9301 + seed * 49297)) * 233280; return Math.round((x - Math.floor(x)) * (mx - mn) + mn) };
+        const credibility = Math.min(98, Math.max(6, rng(20, 90, 1)));
+        let verdict, label, color;
+        if (credibility >= 70) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
+        else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
+        else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
+        return {
+          title: title || 'Untitled', domain: 'Text Analysis',
+          overall: credibility, verdict, label, color,
+          timestamp: new Date().toISOString(),
+          scores: {
+            domain: { score: rng(20, 90, 2), label: 'Heuristic Engine', desc: 'Rule-based analysis' },
+            content: { score: rng(20, 90, 3), label: 'BERT Model', desc: 'NLP Context Analysis' },
+            source: { score: credibility, label: 'Ensemble Score', desc: 'Weighted Combination' }
+          },
+          signals: [{ type: 'negative', text: `API Error: ${err.message.slice(0, 80)} — result is simulated` }],
+          metadata: { 'Status': '⚠ API Failed', 'Error': err.message.slice(0, 60), 'Type': 'Simulated Result' }
+        };
       }
-
-      if (!raw || typeof raw !== 'object') throw new Error('Unexpected shape: ' + JSON.stringify(resJson.data).slice(0,150));
-      if (raw.error) throw new Error(raw.error);
-
-      const credibility = Math.round((raw.real_probability ?? (1 - (raw.fake_probability ?? 0.5))) * 100);
-      let verdict, label, color;
-      if (credibility >= 70)      { verdict = 'Likely Real';  label = 'CREDIBLE';   color = '#00ff88'; }
-      else if (credibility >= 40) { verdict = 'Unverified';   label = 'UNCERTAIN';  color = '#ffcc00'; }
-      else if (credibility >= 25) { verdict = 'Suspicious';   label = 'SUSPICIOUS'; color = '#ff8844'; }
-      else                        { verdict = 'Likely Fake';  label = 'FAKE';       color = '#ff3355'; }
-
-      const bertFake = raw.bert_fake ?? (1 - credibility / 100);
-      const bertReal = raw.bert_real ?? (credibility / 100);
-      const hFake    = raw.heuristic_fake ?? 0;
-      const hDetail  = raw.heuristic_details ?? 'No flags';
-
-      const signals = [];
-      if (bertFake > 0.5) signals.push({ type: 'negative', text: `BERT: High fake probability (${(bertFake*100).toFixed(1)}%)` });
-      else                signals.push({ type: 'positive', text: `BERT: High real probability (${(bertReal*100).toFixed(1)}%)` });
-      if (hFake > 0) signals.push({ type: 'warning', text: `Heuristic: ${hDetail}` });
-      else           signals.push({ type: 'positive', text: 'No heuristic red flags' });
-
-      return {
-        title: title || 'Untitled', domain: 'Text Analysis',
-        overall: credibility, verdict, label, color,
-        timestamp: new Date().toISOString(),
-        scores: {
-          domain:  { score: Math.round((1-hFake)*100), label: 'Heuristic Engine', desc: hDetail },
-          content: { score: Math.round(bertReal*100),  label: 'BERT Model',       desc: 'NLP Context Analysis' },
-          source:  { score: credibility,               label: 'Ensemble Score',   desc: 'Weighted Combination' },
-        },
-        signals,
-        metadata: {
-          'Analyzed By': 'TruthLens ML API',
-          'Model':       'BERT-base-uncased (Fine-Tuned)',
-          'Confidence':  `${raw.confidence ?? credibility}%`,
-          'Type':        'Title & Content Analysis',
-        },
-      };
-    } catch (err) {
-      console.warn('[TruthLens] Failed:', ep.url, err.message);
-      lastError = err;
     }
-  }
 
-  // Both failed — simulation with error shown
-  console.error('[TruthLens] All endpoints failed:', lastError?.message);
-  const seed = (title+content).split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  const rng = (mn,mx,s)=>{const x=Math.sin((s*9301+seed*49297))*233280;return Math.round((x-Math.floor(x))*(mx-mn)+mn)};
-  const credibility = Math.min(98,Math.max(6,rng(20,90,1)));
-  let verdict,label,color;
-  if(credibility>=70){verdict='Likely Real';label='CREDIBLE';color='#00ff88';}
-  else if(credibility>=40){verdict='Unverified';label='UNCERTAIN';color='#ffcc00';}
-  else{verdict='Likely Fake';label='FAKE';color='#ff3355';}
-  return {
-    title:title||'Untitled',domain:'Text Analysis',overall:credibility,verdict,label,color,
-    timestamp:new Date().toISOString(),
-    scores:{
-      domain:{score:rng(20,90,2),label:'Heuristic Engine',desc:'Rule-based analysis'},
-      content:{score:rng(20,90,3),label:'BERT Model',desc:'NLP Context Analysis'},
-      source:{score:credibility,label:'Ensemble Score',desc:'Weighted Combination'},
-    },
-    signals:[{type:'negative',text:`API Error: ${lastError?.message?.slice(0,80)||'unknown'} — result is simulated`}],
-    metadata:{'Status':'⚠ API Failed','Error':lastError?.message?.slice(0,60)||'unknown','Type':'Simulated Result'},
-  };
+    // Both failed — simulation with error shown
+    console.error('[TruthLens] All endpoints failed:', lastError?.message);
+    const seed = (title + content).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const rng = (mn, mx, s) => { const x = Math.sin((s * 9301 + seed * 49297)) * 233280; return Math.round((x - Math.floor(x)) * (mx - mn) + mn) };
+    const credibility = Math.min(98, Math.max(6, rng(20, 90, 1)));
+    let verdict, label, color;
+    if (credibility >= 70) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
+    else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
+    else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
+    return {
+      title: title || 'Untitled', domain: 'Text Analysis', overall: credibility, verdict, label, color,
+      timestamp: new Date().toISOString(),
+      scores: {
+        domain: { score: rng(20, 90, 2), label: 'Heuristic Engine', desc: 'Rule-based analysis' },
+        content: { score: rng(20, 90, 3), label: 'BERT Model', desc: 'NLP Context Analysis' },
+        source: { score: credibility, label: 'Ensemble Score', desc: 'Weighted Combination' },
+      },
+      signals: [{ type: 'negative', text: `API Error: ${lastError?.message?.slice(0, 80) || 'unknown'} — result is simulated` }],
+      metadata: { 'Status': '⚠ API Failed', 'Error': lastError?.message?.slice(0, 60) || 'unknown', 'Type': 'Simulated Result' },
+    };
 }
 
     const { useState, useEffect, useRef } = React;
