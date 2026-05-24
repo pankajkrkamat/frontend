@@ -184,22 +184,24 @@
   <script type="text/babel" data-presets="react">
     const API_URL = 'https://pankajkr07-fakenewsdetector.hf.space';
 
-    /* ── HELPER: Parse Gradio response safely ── */
+    // Gradio 3.x uses /run/predict, Gradio 4.x uses /api/predict
+    // We try both endpoints automatically
+    const ENDPOINTS = [
+      { url: API_URL + '/api/predict', body: (t,c) => ({ data: [t, c], fn_index: 0 }) },
+      { url: API_URL + '/run/predict', body: (t,c) => ({ data: [t, c], fn_index: 0 }) },
+    ];
+
     function parseGradioData(resJson) {
-      // Gradio /run/predict returns { data: [html_string, json_object_or_string] }
       if (!resJson || !resJson.data || !Array.isArray(resJson.data)) return null;
       let raw = resJson.data[1];
       if (!raw) return null;
-      // Sometimes Gradio serializes JSON component as a string
       if (typeof raw === 'string') {
         try { raw = JSON.parse(raw); } catch { return null; }
       }
-      // Must have real_probability field to be valid
       if (typeof raw.real_probability === 'undefined') return null;
       return raw;
     }
 
-    /* ── HELPER: Build result object from API data ── */
     function buildResult(title, data) {
       const credibility = Math.round(data.real_probability * 100);
       let verdict, label, color;
@@ -207,13 +209,11 @@
       else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
       else if (credibility >= 25) { verdict = 'Suspicious'; label = 'SUSPICIOUS'; color = '#ff8844'; }
       else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
-
       const signals = [];
-      if (data.bert_fake > 0.5) signals.push({ type: 'negative', text: `BERT: High fake probability (${(data.bert_fake*100).toFixed(1)}%)` });
-      else signals.push({ type: 'positive', text: `BERT: High real probability (${(data.bert_real*100).toFixed(1)}%)` });
-      if (data.heuristic_fake > 0) signals.push({ type: 'warning', text: `Heuristic Flags: ${data.heuristic_details}` });
+      if (data.bert_fake > 0.5) signals.push({ type: 'negative', text: 'BERT: High fake probability (' + (data.bert_fake*100).toFixed(1) + '%)' });
+      else signals.push({ type: 'positive', text: 'BERT: High real probability (' + (data.bert_real*100).toFixed(1) + '%)' });
+      if (data.heuristic_fake > 0) signals.push({ type: 'warning', text: 'Heuristic Flags: ' + data.heuristic_details });
       else signals.push({ type: 'positive', text: 'No heuristic red flags detected' });
-
       return {
         title: title || 'Untitled', domain: 'Text Analysis',
         overall: credibility, verdict, label, color,
@@ -225,88 +225,72 @@
         },
         signals,
         metadata: {
-          'Analyzed By': 'TruthLens ML API ✓',
+          'Analyzed By': 'TruthLens ML API',
           'Model': 'BERT-base-uncased (Fine-Tuned)',
-          'Confidence': `${data.confidence}%`,
-          'BERT Fake %': `${(data.bert_fake*100).toFixed(1)}%`,
-          'BERT Real %': `${(data.bert_real*100).toFixed(1)}%`
+          'Confidence': data.confidence + '%',
+          'BERT Fake %': (data.bert_fake*100).toFixed(1) + '%',
+          'BERT Real %': (data.bert_real*100).toFixed(1) + '%'
         }
       };
     }
 
-    /* ── MAIN ANALYZER with retry logic ── */
     async function analyzeContent(title, content) {
-      const MAX_RETRIES = 3;
-      const RETRY_DELAY = 4000; // 4 seconds between retries (space wake-up time)
-
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          console.log(`API attempt ${attempt}/${MAX_RETRIES}...`);
-
-          const response = await fetch(`${API_URL}/run/predict`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: [title, content], fn_index: 0 })
-          });
-
-          // 500 = space cold starting, retry
-          if (response.status === 500 || response.status === 503) {
-            console.warn(`Attempt ${attempt}: HTTP ${response.status} — space may be waking up`);
-            if (attempt < MAX_RETRIES) {
-              await new Promise(r => setTimeout(r, RETRY_DELAY));
-              continue; // retry
+      const RETRY_DELAY = 4000;
+      for (let ei = 0; ei < ENDPOINTS.length; ei++) {
+        const ep = ENDPOINTS[ei];
+        const MAX_RETRIES = 2;
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            console.log('API attempt ' + attempt + '/' + MAX_RETRIES + ' -> ' + ep.url);
+            const response = await fetch(ep.url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(ep.body(title, content))
+            });
+            if (response.status === 404) {
+              console.warn(ep.url + ' -> 404, switching endpoint');
+              break;
             }
-            throw new Error(`API returned ${response.status} after ${MAX_RETRIES} attempts`);
-          }
-
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const resJson = await response.json();
-          const data = parseGradioData(resJson);
-
-          if (!data) {
-            console.warn(`Attempt ${attempt}: Invalid response shape`, resJson);
-            if (attempt < MAX_RETRIES) {
-              await new Promise(r => setTimeout(r, RETRY_DELAY));
-              continue;
+            if (response.status === 500 || response.status === 503) {
+              console.warn('HTTP ' + response.status + ' cold start, waiting...');
+              if (attempt < MAX_RETRIES) { await new Promise(r => setTimeout(r, RETRY_DELAY)); continue; }
+              break;
             }
-            throw new Error('Invalid API response after retries');
-          }
-
-          console.log('✅ API success on attempt', attempt, data);
-          return buildResult(title, data);
-
-        } catch (err) {
-          console.warn(`Attempt ${attempt} error:`, err.message);
-          if (attempt < MAX_RETRIES) {
-            await new Promise(r => setTimeout(r, RETRY_DELAY));
-          } else {
-            // All retries exhausted — show clear error in metadata
-            console.error('All API attempts failed. Showing error state.');
-            return {
-              title: title || 'Untitled', domain: 'Text Analysis',
-              overall: 0, verdict: 'API Error', label: 'OFFLINE', color: '#ff3355',
-              timestamp: new Date().toISOString(),
-              scores: {
-                domain: { score: 0, label: 'Heuristic Engine', desc: 'Unavailable' },
-                content: { score: 0, label: 'BERT Model', desc: 'Unavailable' },
-                source: { score: 0, label: 'Ensemble Score', desc: 'Unavailable' }
-              },
-              signals: [{ type: 'negative', text: `HuggingFace API unavailable after ${MAX_RETRIES} attempts. Please visit https://pankajkr07-fakenewsdetector.hf.space to wake up the Space, then retry.` }],
-              metadata: {
-                'Status': '❌ API Offline',
-                'Fix': 'Open HuggingFace Space to wake it',
-                'Space URL': 'pankajkr07-fakenewsdetector.hf.space',
-                'Error': err.message
-              }
-            };
+            if (!response.ok) { console.warn('HTTP ' + response.status); break; }
+            const resJson = await response.json();
+            const data = parseGradioData(resJson);
+            if (!data) {
+              console.warn('Bad response shape:', JSON.stringify(resJson).slice(0,200));
+              if (attempt < MAX_RETRIES) { await new Promise(r => setTimeout(r, RETRY_DELAY)); continue; }
+              break;
+            }
+            console.log('API success via ' + ep.url);
+            return buildResult(title, data);
+          } catch (err) {
+            console.warn('Attempt ' + attempt + ' error: ' + err.message);
+            if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, RETRY_DELAY));
           }
         }
       }
+      console.error('All API attempts failed.');
+      return {
+        title: title || 'Untitled', domain: 'Text Analysis',
+        overall: 0, verdict: 'API Unreachable', label: 'OFFLINE', color: '#ff8844',
+        timestamp: new Date().toISOString(),
+        scores: {
+          domain: { score: 0, label: 'Heuristic Engine', desc: 'Space sleeping' },
+          content: { score: 0, label: 'BERT Model', desc: 'Space sleeping' },
+          source: { score: 0, label: 'Ensemble Score', desc: 'Space sleeping' }
+        },
+        signals: [
+          { type: 'warning', text: 'HuggingFace Space is sleeping.' },
+          { type: 'warning', text: 'Fix: Open https://pankajkr07-fakenewsdetector.hf.space, wait 30s, then click Analyze again.' }
+        ],
+        metadata: { 'Status': 'Space Sleeping', 'Fix': 'Open HF Space, wait 30s, retry' }
+      };
     }
 
     const { useState, useEffect, useRef } = React;
-
     function useWindowWidth() {
       const [w, setW] = useState(window.innerWidth);
       useEffect(() => { const h = () => setW(window.innerWidth); window.addEventListener('resize', h); return () => window.removeEventListener('resize', h) }, []);
@@ -355,16 +339,11 @@
       return <div className="sig-tag" style={{ background: s.bg, border: `1px solid ${s.border}` }}><span className="sig-icon" style={{ color: s.color }}>{s.icon}</span><span style={{ color: s.color }}>{text}</span></div>;
     }
 
-    /* ── FIX 2: AiInsight — removed broken fetch, direct setText ── */
     function AiInsight({ result }) {
       const [text, setText] = useState('');
       const [loading, setLoading] = useState(true);
-
       useEffect(() => {
-        setText('');
-        setLoading(true);
-
-        // Small delay to simulate "thinking", then show insight
+        setText(''); setLoading(true);
         const t = setTimeout(() => {
           setLoading(false);
           if (result.overall >= 70) {
@@ -375,11 +354,8 @@
             setText(`This article scores ${result.overall}/100 (${result.verdict}). The BERT model detected patterns strongly consistent with the WELFake misinformation dataset. The heuristic engine likely caught conspiracy phrases, excessive capitalization, or clickbait punctuation. Treat this content with caution.`);
           }
         }, 1200);
-
         return () => clearTimeout(t);
-        // FIX 1: was result.url (undefined), now result.title
       }, [result.title, result.overall]);
-
       return (
         <div className="ai-box">
           <div className="ai-header">
@@ -463,7 +439,6 @@
               </div>
             </div>
           </section>
-
           <div className="stats-strip">
             <div className="wrap">
               {[['96.0%','BERT Test Accuracy'],['72,134','Dataset Articles'],['85 / 15','Ensemble Weighting'],['256','Max Token Length']].map(([v,l]) => (
@@ -471,7 +446,6 @@
               ))}
             </div>
           </div>
-
           <div className="section wrap">
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <div className="label" style={{ marginBottom: 10 }}>DETECTION SYSTEM</div>
@@ -489,7 +463,6 @@
               ))}
             </div>
           </div>
-
           <div style={{ background: 'var(--surf)', borderTop: '1px solid var(--b1)', borderBottom: '1px solid var(--b1)', padding: '2.5rem var(--px)' }}>
             <div className="wrap">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.2rem', flexWrap: 'wrap', gap: 8 }}>
@@ -511,7 +484,6 @@
               </div>
             </div>
           </div>
-
           <div className="section wrap">
             <div className="cta-card">
               <div className="cta-orb" />
@@ -537,8 +509,8 @@
       const [step, setStep] = useState(0);
       const [result, setResult] = useState(null);
       const [err, setErr] = useState('');
-      const [history, setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('tl_h')||'[]') } catch { return [] } });
       const [retryMsg, setRetryMsg] = useState('');
+      const [history, setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('tl_h')||'[]') } catch { return [] } });
       const timerRef = useRef(null);
       const retryRef = useRef(null);
       const w = useWindowWidth();
@@ -550,32 +522,20 @@
         const targetContent = c.trim();
         if (!targetContent && !targetTitle) { setErr('Please enter the article content'); return; }
         setErr(''); setRetryMsg(''); setLoading(true); setResult(null); setStep(0);
-
-        // Step animation
         let s = 0;
-        timerRef.current = setInterval(() => {
-          s++;
-          if (s < STEPS.length) setStep(s);
-          else clearInterval(timerRef.current);
-        }, 440);
-
-        // Show retry messages timed to the 4s retry delays in analyzeContent
+        timerRef.current = setInterval(() => { s++; if (s < STEPS.length) setStep(s); else clearInterval(timerRef.current) }, 440);
         let attempt = 0;
         retryRef.current = setInterval(() => {
           attempt++;
           if (attempt === 1) setRetryMsg('⏳ Connecting to AI model...');
-          else if (attempt === 2) setRetryMsg('🔄 Model waking up, retrying... (2/3)');
-          else { setRetryMsg('🔄 Final retry in progress...'); clearInterval(retryRef.current); }
+          else if (attempt === 2) setRetryMsg('🔄 Trying alternate endpoint...');
+          else { setRetryMsg('🔄 Final attempt in progress...'); clearInterval(retryRef.current); }
         }, 4200);
-
         analyzeContent(targetTitle, targetContent).then(res => {
-          clearInterval(timerRef.current);
-          clearInterval(retryRef.current);
-          setRetryMsg('');
-          setStep(STEPS.length);
+          clearInterval(timerRef.current); clearInterval(retryRef.current);
+          setRetryMsg(''); setStep(STEPS.length);
           setTimeout(() => {
-            setLoading(false);
-            setResult(res);
+            setLoading(false); setResult(res);
             const h = [res, ...history.filter(x => x.title !== res.title)].slice(0, 8);
             setHistory(h);
             try { localStorage.setItem('tl_h', JSON.stringify(h)) } catch {}
@@ -590,14 +550,12 @@
             <h1 className="h2">Analyze Any News Article</h1>
             <p style={{ color: 'var(--tx3)', fontSize: 13, marginTop: 6 }}>Paste a news article title and content. Results in ~3 seconds.</p>
           </div>
-
           <div className="input-wrap" style={{ marginBottom: err ? 8 : '1.3rem', flexDirection: 'column', alignItems: 'stretch', padding: '16px', gap: '10px' }}>
             <input className="url-input" value={title} onChange={e => { setTitle(e.target.value); setErr('') }} placeholder="News Headline (optional)" style={{ fontSize: '15px', padding: '8px', borderBottom: '1px solid var(--b1)' }} />
             <textarea className="url-input" value={content} onChange={e => { setContent(e.target.value); setErr('') }} onKeyDown={e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()} }} placeholder="Paste article content here..." autoFocus style={{ resize: 'vertical', minHeight: '140px', padding: '8px', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontFamily: 'inherit', color: 'inherit' }} />
             <button className="analyze-btn" onClick={() => go()} disabled={loading} style={{ alignSelf: 'flex-end' }}>{loading ? 'Analyzing...' : 'Analyze →'}</button>
           </div>
           {err && <p style={{ color: 'var(--rd)', fontSize: 13, marginBottom: '1rem', fontFamily: 'var(--fm)' }}>⚠ {err}</p>}
-
           {!result && !loading && (
             <div style={{ marginBottom: '1.5rem' }}>
               <div className="label" style={{ marginBottom: 7 }}>TRY A SAMPLE</div>
@@ -606,7 +564,6 @@
               </div>
             </div>
           )}
-
           {loading && (
             <div className="loader-card">
               <div className="loader-inner">
@@ -635,7 +592,6 @@
               <div className="progress-bar"><div className="progress-fill" style={{ width: `${(step/STEPS.length)*100}%` }} /></div>
             </div>
           )}
-
           {result && !loading && (
             <div style={{ animation: 'fadeUp .5s ease' }}>
               <div className="verdict-card" style={{ border: `1px solid ${result.color}44`, backgroundImage: `radial-gradient(ellipse 60% 40% at 50% 0%,${result.color}0d 0%,transparent 70%)` }}>
@@ -653,7 +609,6 @@
                 </div>
                 <AiInsight result={result} />
               </div>
-
               <div className="grid-sidebar" style={{ marginBottom: 'var(--gap)' }}>
                 <div className="card">
                   <div className="h3" style={{ marginBottom: '1.2rem' }}>Signal Breakdown</div>
@@ -670,14 +625,12 @@
                   <button onClick={() => { setResult(null); setTitle(''); setContent('') }} style={{ marginTop: '1rem', width: '100%', padding: '8px', borderRadius: 7, fontSize: 13, fontFamily: 'var(--fh)', fontWeight: 600, color: 'var(--tx2)', background: 'var(--surf2)', border: '1px solid var(--b1)' }}>← Analyze another article</button>
                 </div>
               </div>
-
               <div className="card">
                 <div className="h3" style={{ marginBottom: '1rem' }}>Detection Signals</div>
                 <div className="sig-tags">{result.signals.map((s,i) => <SigTag key={i} type={s.type} text={s.text} />)}</div>
               </div>
             </div>
           )}
-
           {history.length > 0 && !loading && !result && (
             <div style={{ marginTop: '2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.7rem' }}>
@@ -706,7 +659,6 @@
       { n:'05', title:'Verdict Output', color:'#ff3355', icon:'⚖️', desc:'The final probability determines the news credibility category.', checks:[['FAKE NEWS','Final probability > 70%'],['SUSPICIOUS','Final probability > 40%'],['REAL NEWS','Otherwise considered credible']] }
     ];
     const MODELS = [{ name:'BERT (Fine-Tuned)', acc:96.0, type:'Deep Learning', color:'#00ff88' },{ name:'BERT (Pre-Trained)', acc:87.0, type:'Baseline', color:'#00d4ff' },{ name:'BART Zero-Shot', acc:80.0, type:'Reference', color:'#a855f7' }];
-
     function clamp(min, max) { const w = window.innerWidth; return Math.round(min+(max-min)*Math.min(Math.max((w-320)/(1100-320),0),1)) }
 
     function HowItWorks() {
