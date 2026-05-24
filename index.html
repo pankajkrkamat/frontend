@@ -1405,7 +1405,11 @@
           throw new Error(resJson.data[1].error);
         }
 
-        const data = resJson.data[1]; // The JSON object is the second item in the array
+        const data = resJson.data[1];
+
+        if (!data || data.error) {
+          throw new Error(data?.error || 'Invalid response from API');
+        } // The JSON object is the second item in the array
 
         const credibility = Math.round(data.real_probability * 100);
         let verdict, label, color;
@@ -1528,17 +1532,15 @@
       useEffect(() => {
         setText(''); setLoading(true);
         const prompt = `You are a misinformation detection expert. In 2-3 sentences, explain why this article scored ${result.overall}/100 (verdict: ${result.verdict}) for domain "${result.domain}". Signals: ${result.signals.map(s => s.text).join('; ')}. Be specific. No bullet points.`;
-        fetch(`${API_URL}/run/predict`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [result.verdict, result.overall, result.signals.map(s => s.text).join('; ')], fn_index: 0 })
-        }).then(() => {
-          throw new Error('use fallback');
-        }).catch(() => {
-          setLoading(false);
-          setText(result.overall >= 70 ? `This article from ${result.domain} shows strong credibility signals. Our fine-tuned BERT model detected high textual authenticity, and the heuristic engine found no conspiracy or clickbait red flags. The ${result.overall}/100 score reflects high confidence in its validity.` : result.overall >= 40 ? `${result.domain} returns a mixed verdict at ${result.overall}/100. The BERT model is uncertain about the textual patterns, or minor heuristic flags were triggered. Verify claims independently.` : `${result.domain} triggered multiple red flags. The BERT model detected patterns consistent with the WELFake misinformation dataset, and the heuristic engine may have caught conspiracy phrases or elevated clickbait signals.`);
-        });
-      }, [result.url]);
+        setLoading(false);
+        setText(
+          result.overall >= 70
+            ? `This article shows strong credibility signals. BERT detected high textual authenticity and no conspiracy or clickbait red flags. Score: ${result.overall}/100.`
+            : result.overall >= 40
+              ? `Mixed verdict at ${result.overall}/100. BERT is uncertain about the textual patterns, or minor heuristic flags were triggered. Verify claims independently.`
+              : `Multiple red flags detected. BERT found patterns consistent with misinformation dataset, and heuristic engine caught conspiracy phrases or elevated clickbait signals.`
+        );
+      }, [result.title]);
       return (
         <div className="ai-box">
           <div className="ai-header">
