@@ -1395,30 +1395,30 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: [title, content], fn_index: 0 })
         });
-    
+
         if (!response.ok) throw new Error('API Error');
-        
+
         const resJson = await response.json();
-        
+
         // Check for error from backend
         if (resJson.data[1] && resJson.data[1].error) {
-           throw new Error(resJson.data[1].error);
+          throw new Error(resJson.data[1].error);
         }
-        
+
         const data = resJson.data[1]; // The JSON object is the second item in the array
-        
+
         const credibility = Math.round(data.real_probability * 100);
         let verdict, label, color;
-        
+
         if (credibility >= 70) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
         else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
         else if (credibility >= 25) { verdict = 'Suspicious'; label = 'SUSPICIOUS'; color = '#ff8844'; }
         else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
-        
+
         const signals = [];
-        if (data.bert_fake > 0.5) signals.push({ type: 'negative', text: `BERT detected high fake probability (${(data.bert_fake*100).toFixed(1)}%)` });
-        else signals.push({ type: 'positive', text: `BERT detected high real probability (${(data.bert_real*100).toFixed(1)}%)` });
-        
+        if (data.bert_fake > 0.5) signals.push({ type: 'negative', text: `BERT detected high fake probability (${(data.bert_fake * 100).toFixed(1)}%)` });
+        else signals.push({ type: 'positive', text: `BERT detected high real probability (${(data.bert_real * 100).toFixed(1)}%)` });
+
         if (data.heuristic_fake > 0) signals.push({ type: 'warning', text: `Heuristic Flags: ${data.heuristic_details}` });
         else signals.push({ type: 'positive', text: 'No heuristic red flags detected' });
 
@@ -1444,37 +1444,52 @@
           }
         };
       } catch (err) {
-        console.warn("Real API failed, falling back to simulation.", err);
-        // Fallback simulation logic if API is unreachable (for demo purposes)
-        return new Promise(resolve => {
-          setTimeout(() => {
-            const seed = (title + content).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-            const rng = (min, max, s) => { const x = Math.sin(((s || 1) * 9301 + seed * 49297)) * 233280; return Math.round((x - Math.floor(x)) * (max - min) + min) };
-            const dom = url.startsWith('http') ? url.replace(/https?:\/\//, '').split('/')[0].toLowerCase() : 'text';
-            const cred = ['reuters', 'bbc', 'apnews', 'nytimes', 'theguardian', 'npr', 'wsj', 'washingtonpost', 'bloomberg', 'aljazeera'];
-            const fake = ['fakecnn', 'infowars', 'realnewstoday.biz', 'truenews24', 'totallyrealinfo', 'breakingnews247'];
-            const bias = cred.some(d => dom.includes(d)) ? 28 : fake.some(d => dom.includes(d)) ? -32 : 0;
-            const cl = v => Math.min(98, Math.max(6, v));
-            const ds = cl(rng(22, 90, 1) + bias), cs = cl(rng(18, 94, 2) + bias), ss = cl(rng(15, 96, 3) + bias), se = cl(rng(28, 86, 4) + bias), cr = cl(rng(18, 93, 5) + bias);
-            const overall = Math.round(ds * .2 + cs * .25 + ss * .25 + se * .15 + cr * .15);
-            let verdict, label, color;
-            if (overall >= 75) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
-            else if (overall >= 55) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
-            else if (overall >= 35) { verdict = 'Suspicious'; label = 'SUSPICIOUS'; color = '#ff8844'; }
-            else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
-            const pos = ['Domain registered over 5 years ago', 'HTTPS enabled with valid SSL certificate', 'Author byline present and verifiable', 'Cross-referenced with Reuters, AP, BBC', 'Neutral, fact-based language detected', 'Multiple credible external sources cited'];
-            const warn = ['Slightly sensational headline tone', 'Limited cross-source verification found', 'Publication date not clearly visible', 'Few external citations in article body'];
-            const neg = ['Domain registered less than 6 months ago', 'High emotional manipulation detected', 'No verified author information found', 'Story not corroborated by any major outlet', 'Clickbait patterns detected in headline', 'Domain flagged on misinformation blacklist'];
-            let signals = [];
-            if (overall >= 70) signals = [...pos.slice(0, rng(3, 5, 20)).map(t => ({ type: 'positive', text: t })), ...warn.slice(0, rng(0, 2, 21)).map(t => ({ type: 'warning', text: t }))];
-            else if (overall >= 45) signals = [...pos.slice(0, rng(1, 3, 20)).map(t => ({ type: 'positive', text: t })), ...warn.slice(0, rng(1, 3, 21)).map(t => ({ type: 'warning', text: t })), ...neg.slice(0, rng(1, 2, 22)).map(t => ({ type: 'negative', text: t }))];
-            else signals = [...warn.slice(0, rng(1, 2, 21)).map(t => ({ type: 'warning', text: t })), ...neg.slice(0, rng(3, 5, 22)).map(t => ({ type: 'negative', text: t }))];
-            resolve({
-              url, domain: dom, overall, verdict, label, color, timestamp: new Date().toISOString(),
-              scores: { domain: { score: ds, label: 'Domain Credibility', desc: 'Age, registration, blacklist' }, content: { score: cs, label: 'Content Analysis', desc: 'NLP, sentiment, bias' }, source: { score: ss, label: 'Source Reputation', desc: 'Publisher trust index' }, sentiment: { score: se, label: 'Sentiment Score', desc: 'Emotional manipulation' }, crossRef: { score: cr, label: 'Cross-Reference', desc: 'Verified vs 12 databases' } },
-              signals,
-              metadata: { 'Domain Age': `${rng(1, 20, 10)} years`, 'HTTPS': rng(0, 10, 11) > 3 ? '✓ Enabled' : '✗ Missing', 'Country': ['US', 'GB', 'IN', 'AU', 'DE'][rng(0, 4, 12)], 'Alexa Rank': '#' + rng(200, 5000000, 13).toLocaleString(), 'Word Count': rng(200, 3200, 14).toLocaleString(), 'Reading Level': ['Elementary', 'Middle School', 'High School', 'College'][rng(0, 3, 15)] }
-            });
+        console.warn('API failed:', err);
+        const seed = (title + content).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const rng = (min, max, s) => { const x = Math.sin((s * 9301 + seed * 49297)) * 233280; return Math.round((x - Math.floor(x)) * (max - min) + min) };
+        const credibility = Math.min(98, Math.max(6, rng(20, 90, 1)));
+        let verdict, label, color;
+        if (credibility >= 70) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
+        else if (credibility >= 40) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
+        else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
+        return {
+          title: title || 'Untitled', domain: 'Text Analysis',
+          overall: credibility, verdict, label, color,
+          timestamp: new Date().toISOString(),
+          scores: {
+            domain: { score: rng(20, 90, 2), label: 'Heuristic Engine', desc: 'Rule-based analysis' },
+            content: { score: rng(20, 90, 3), label: 'BERT Model', desc: 'NLP Context Analysis' },
+            source: { score: credibility, label: 'Ensemble Score', desc: 'Weighted Combination' }
+          },
+          signals: [{ type: credibility > 50 ? 'positive' : 'negative', text: credibility > 50 ? 'Content appears credible' : 'Potential misinformation detected' }],
+          metadata: { 'Status': 'Offline Mode', 'Note': 'API unavailable', 'Type': 'Simulated Result' }
+        };
+      }
+    }
+    const cred = ['reuters', 'bbc', 'apnews', 'nytimes', 'theguardian', 'npr', 'wsj', 'washingtonpost', 'bloomberg', 'aljazeera'];
+    const fake = ['fakecnn', 'infowars', 'realnewstoday.biz', 'truenews24', 'totallyrealinfo', 'breakingnews247'];
+    const bias = cred.some(d => dom.includes(d)) ? 28 : fake.some(d => dom.includes(d)) ? -32 : 0;
+    const cl = v => Math.min(98, Math.max(6, v));
+    const ds = cl(rng(22, 90, 1) + bias), cs = cl(rng(18, 94, 2) + bias), ss = cl(rng(15, 96, 3) + bias), se = cl(rng(28, 86, 4) + bias), cr = cl(rng(18, 93, 5) + bias);
+    const overall = Math.round(ds * .2 + cs * .25 + ss * .25 + se * .15 + cr * .15);
+    let verdict, label, color;
+    if (overall >= 75) { verdict = 'Likely Real'; label = 'CREDIBLE'; color = '#00ff88'; }
+    else if (overall >= 55) { verdict = 'Unverified'; label = 'UNCERTAIN'; color = '#ffcc00'; }
+    else if (overall >= 35) { verdict = 'Suspicious'; label = 'SUSPICIOUS'; color = '#ff8844'; }
+    else { verdict = 'Likely Fake'; label = 'FAKE'; color = '#ff3355'; }
+    const pos = ['Domain registered over 5 years ago', 'HTTPS enabled with valid SSL certificate', 'Author byline present and verifiable', 'Cross-referenced with Reuters, AP, BBC', 'Neutral, fact-based language detected', 'Multiple credible external sources cited'];
+    const warn = ['Slightly sensational headline tone', 'Limited cross-source verification found', 'Publication date not clearly visible', 'Few external citations in article body'];
+    const neg = ['Domain registered less than 6 months ago', 'High emotional manipulation detected', 'No verified author information found', 'Story not corroborated by any major outlet', 'Clickbait patterns detected in headline', 'Domain flagged on misinformation blacklist'];
+    let signals = [];
+    if (overall >= 70) signals = [...pos.slice(0, rng(3, 5, 20)).map(t => ({ type: 'positive', text: t })), ...warn.slice(0, rng(0, 2, 21)).map(t => ({ type: 'warning', text: t }))];
+    else if (overall >= 45) signals = [...pos.slice(0, rng(1, 3, 20)).map(t => ({ type: 'positive', text: t })), ...warn.slice(0, rng(1, 3, 21)).map(t => ({ type: 'warning', text: t })), ...neg.slice(0, rng(1, 2, 22)).map(t => ({ type: 'negative', text: t }))];
+    else signals = [...warn.slice(0, rng(1, 2, 21)).map(t => ({ type: 'warning', text: t })), ...neg.slice(0, rng(3, 5, 22)).map(t => ({ type: 'negative', text: t }))];
+    resolve({
+      url, domain: dom, overall, verdict, label, color, timestamp: new Date().toISOString(),
+      scores: { domain: { score: ds, label: 'Domain Credibility', desc: 'Age, registration, blacklist' }, content: { score: cs, label: 'Content Analysis', desc: 'NLP, sentiment, bias' }, source: { score: ss, label: 'Source Reputation', desc: 'Publisher trust index' }, sentiment: { score: se, label: 'Sentiment Score', desc: 'Emotional manipulation' }, crossRef: { score: cr, label: 'Cross-Reference', desc: 'Verified vs 12 databases' } },
+      signals,
+      metadata: { 'Domain Age': `${rng(1, 20, 10)} years`, 'HTTPS': rng(0, 10, 11) > 3 ? '✓ Enabled' : '✗ Missing', 'Country': ['US', 'GB', 'IN', 'AU', 'DE'][rng(0, 4, 12)], 'Alexa Rank': '#' + rng(200, 5000000, 13).toLocaleString(), 'Word Count': rng(200, 3200, 14).toLocaleString(), 'Reading Level': ['Elementary', 'Middle School', 'High School', 'College'][rng(0, 3, 15)] }
+    });
           }, 2700);
         });
       }
@@ -1542,15 +1557,15 @@
         setText(''); setLoading(true);
         const prompt = `You are a misinformation detection expert. In 2-3 sentences, explain why this article scored ${result.overall}/100 (verdict: ${result.verdict}) for domain "${result.domain}". Signals: ${result.signals.map(s => s.text).join('; ')}. Be specific. No bullet points.`;
         fetch(`${API_URL}/run/predict`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: [result.verdict, result.overall, result.signals.map(s => s.text).join('; ')], fn_index: 0 })
-          }).then(() => {
-            throw new Error('use fallback');
-          }).catch(() => {
-            setLoading(false);
-            setText(result.overall >= 70 ? `This article from ${result.domain} shows strong credibility signals. Our fine-tuned BERT model detected high textual authenticity, and the heuristic engine found no conspiracy or clickbait red flags. The ${result.overall}/100 score reflects high confidence in its validity.` : result.overall >= 40 ? `${result.domain} returns a mixed verdict at ${result.overall}/100. The BERT model is uncertain about the textual patterns, or minor heuristic flags were triggered. Verify claims independently.` : `${result.domain} triggered multiple red flags. The BERT model detected patterns consistent with the WELFake misinformation dataset, and the heuristic engine may have caught conspiracy phrases or elevated clickbait signals.`);
-          });
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: [result.verdict, result.overall, result.signals.map(s => s.text).join('; ')], fn_index: 0 })
+        }).then(() => {
+          throw new Error('use fallback');
+        }).catch(() => {
+          setLoading(false);
+          setText(result.overall >= 70 ? `This article from ${result.domain} shows strong credibility signals. Our fine-tuned BERT model detected high textual authenticity, and the heuristic engine found no conspiracy or clickbait red flags. The ${result.overall}/100 score reflects high confidence in its validity.` : result.overall >= 40 ? `${result.domain} returns a mixed verdict at ${result.overall}/100. The BERT model is uncertain about the textual patterns, or minor heuristic flags were triggered. Verify claims independently.` : `${result.domain} triggered multiple red flags. The BERT model detected patterns consistent with the WELFake misinformation dataset, and the heuristic engine may have caught conspiracy phrases or elevated clickbait signals.`);
+        });
       }, [result.url]);
       return (
         <div className="ai-box">
@@ -1631,7 +1646,7 @@
               <div className="hero-ticker"><span key={ti} style={{ display: 'block', animation: 'fadeUp .4s ease' }}>→ {TICKER[ti]}</span></div>
               <div className="hero-input-wrap" style={{ padding: '16px', alignItems: 'stretch', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
                 <input className="hero-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="News Headline (optional)" style={{ fontSize: '15px', padding: '8px', borderBottom: '1px solid var(--b1)' }} />
-                <textarea className="hero-input" value={content} onChange={e => setContent(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } }} placeholder="Paste article content here..." style={{ fontSize: '14px', padding: '8px', minHeight: '80px', resize: 'vertical', border: 'none', outline: 'none', background: 'transparent', fontFamily: 'inherit' }} />
+                <textarea className="hero-input" value={content} onChange={e => setContent(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } }} placeholder="Paste article content here..." style={{ fontSize: '14px', padding: '8px', minHeight: '80px', resize: 'vertical', border: 'none', outline: 'none', background: 'transparent', fontFamily: 'inherit' }} />
                 <button className="hero-btn" onClick={go} style={{ fontSize: '15px', padding: '12px 24px', alignSelf: 'flex-end', marginTop: '-40px' }}>Analyze →</button>
               </div>
             </div>
@@ -1726,7 +1741,7 @@
         const targetTitle = t.trim();
         const targetContent = c.trim();
         if (!targetContent && !targetTitle) { setErr('Please enter the article content'); return; }
-        
+
         setErr(''); setLoading(true); setResult(null); setStep(0);
         let s = 0; timerRef.current = setInterval(() => { s++; if (s < STEPS.length) setStep(s); else clearInterval(timerRef.current) }, 440);
         analyzeContent(targetTitle, targetContent).then(res => {
@@ -1745,7 +1760,7 @@
 
           <div className="input-wrap" style={{ marginBottom: err ? 8 : '1.3rem', flexDirection: 'column', alignItems: 'stretch', padding: '16px', gap: '10px' }}>
             <input className="url-input" value={title} onChange={e => { setTitle(e.target.value); setErr('') }} placeholder="News Headline (optional)" style={{ fontSize: '15px', padding: '8px', borderBottom: '1px solid var(--b1)' }} />
-            <textarea className="url-input" value={content} onChange={e => { setContent(e.target.value); setErr('') }} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } }} placeholder="Paste article content here..." autoFocus style={{ resize: 'vertical', minHeight: '140px', padding: '8px', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontFamily: 'inherit', color: 'inherit' }} />
+            <textarea className="url-input" value={content} onChange={e => { setContent(e.target.value); setErr('') }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } }} placeholder="Paste article content here..." autoFocus style={{ resize: 'vertical', minHeight: '140px', padding: '8px', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontFamily: 'inherit', color: 'inherit' }} />
             <button className="analyze-btn" onClick={() => go()} disabled={loading} style={{ alignSelf: 'flex-end', width: 'auto' }}>{loading ? 'Analyzing...' : 'Analyze →'}</button>
           </div>
           {err && <p style={{ color: 'var(--rd)', fontSize: 13, marginBottom: '1rem', fontFamily: 'var(--fm)' }}>⚠ {err}</p>}
