@@ -1360,7 +1360,7 @@
     /* ── FIX 3: ANALYZER with proper error handling ─── */
     async function analyzeContent(title, content) {
   const endpoints = [
-    { url: `${API_URL}/api/predict`, body: { data: [title, content] } },
+    { url: `${API_URL}/api/predict`, body: { data: [title, content], api_name: '/detect_news' } },
     { url: `${API_URL}/run/predict`, body: { data: [title, content], fn_index: 0 } },
   ];
 
