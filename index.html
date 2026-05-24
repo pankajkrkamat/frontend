@@ -187,9 +187,8 @@
     // Gradio 3.x uses /run/predict, Gradio 4.x uses /api/predict
     // We try both endpoints automatically
     const ENDPOINTS = [
-      { url: API_URL + '/api/predict', body: (t,c) => ({ data: [t, c], fn_index: 0 }) },
-      { url: API_URL + '/run/predict', body: (t,c) => ({ data: [t, c], fn_index: 0 }) },
-    ];
+  { url: API_URL + '/run/predict', body: (t,c) => ({ data: [t, c], fn_index: 0 }) },
+  ];
 
     function parseGradioData(resJson) {
       if (!resJson || !resJson.data || !Array.isArray(resJson.data)) return null;
@@ -942,4 +941,5 @@
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
-</html>
+</html>"
+"
