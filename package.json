@@ -1,0 +1,6 @@
+{
+  "name": "truthlens-frontend",
+  "version": "1.0.0",
+  "description": "TruthLens Fake News Detector Frontend",
+  "private": true
+}
