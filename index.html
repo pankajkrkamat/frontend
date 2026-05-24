@@ -1393,9 +1393,9 @@
         const response = await fetch(`${API_URL}/run/predict`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [title, content] })
+          body: JSON.stringify({ data: [title, content], fn_index: 0 })
         });
-        
+    
         if (!response.ok) throw new Error('API Error');
         
         const resJson = await response.json();
@@ -1448,7 +1448,7 @@
         // Fallback simulation logic if API is unreachable (for demo purposes)
         return new Promise(resolve => {
           setTimeout(() => {
-            const seed = url.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const seed = (title + content).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
             const rng = (min, max, s) => { const x = Math.sin(((s || 1) * 9301 + seed * 49297)) * 233280; return Math.round((x - Math.floor(x)) * (max - min) + min) };
             const dom = url.startsWith('http') ? url.replace(/https?:\/\//, '').split('/')[0].toLowerCase() : 'text';
             const cred = ['reuters', 'bbc', 'apnews', 'nytimes', 'theguardian', 'npr', 'wsj', 'washingtonpost', 'bloomberg', 'aljazeera'];
