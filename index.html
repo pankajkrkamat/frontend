@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TruthLens — Fake News Detector</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <!-- NO RECHARTS — replaced with pure SVG/CSS bars to avoid oneOfType crash -->
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#060a0f;--bg2:#0d1117;--surf:#151d28;--surf2:#1a2333;--b1:#1e2d3d;--b2:#253345;--tx:#e8edf2;--tx2:#8899aa;--tx3:#4a5a6a;--ac:#00d4ff;--gn:#00ff88;--rd:#ff3355;--or:#ff8844;--yl:#ffcc00;--pu:#a855f7;--fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;--px:clamp(1rem,4vw,2rem);--py:clamp(2rem,5vw,4rem);--gap:clamp(0.6rem,2vw,1.2rem);--r:12px}
-    html{scroll-behavior:smooth;font-size:16px}
+    :root{
+      --bg:#060a0f;--bg2:#0d1117;--surf:#151d28;--surf2:#1a2333;
+      --b1:#1e2d3d;--b2:#253345;--tx:#e8edf2;--tx2:#8899aa;--tx3:#4a5a6a;
+      --ac:#00d4ff;--gn:#00ff88;--rd:#ff3355;--or:#ff8844;--yl:#ffcc00;--pu:#a855f7;
+      --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+      --px:clamp(1rem,4vw,2rem);--gap:clamp(0.6rem,2vw,1.2rem);--r:12px
+    }
+    html{scroll-behavior:smooth}
     body{font-family:var(--fb);background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.6}
-    button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit;line-height:inherit}
-    input,textarea{font-family:var(--fb);outline:none;border:none;font-size:inherit}
+    button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit}
+    input,textarea{font-family:var(--fb);outline:none;border:none}
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
     .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--gap)}
     .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap)}
@@ -23,11 +28,10 @@
     .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:var(--gap)}
     .grid-sidebar{display:grid;grid-template-columns:1fr 300px;gap:var(--gap)}
     @media(max-width:1024px){.grid-sidebar{grid-template-columns:1fr}}
-    @media(max-width:768px){.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.grid-4{grid-template-columns:repeat(2,1fr)}.hide-md{display:none!important}}
-    @media(max-width:480px){.grid-4{grid-template-columns:1fr}.hide-sm{display:none!important}html{font-size:15px}}
+    @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}.grid-4{grid-template-columns:repeat(2,1fr)}.hide-md{display:none!important}}
+    @media(max-width:480px){.grid-4{grid-template-columns:1fr}.hide-sm{display:none!important}}
     .wrap{max-width:1100px;margin:0 auto;padding:0 var(--px)}
     .card{background:var(--surf);border:1px solid var(--b1);border-radius:var(--r);padding:clamp(1rem,3vw,1.6rem)}
-    .section{padding:var(--py) var(--px)}
     .h1{font-family:var(--fh);font-weight:800;font-size:clamp(2rem,5vw,3.8rem);letter-spacing:-.03em;line-height:1.05}
     .h2{font-family:var(--fh);font-weight:800;font-size:clamp(1.5rem,3.5vw,2.4rem);letter-spacing:-.03em}
     .h3{font-family:var(--fh);font-weight:700;font-size:clamp(1rem,2vw,1.1rem)}
@@ -41,18 +45,18 @@
     #navbar.scrolled{background:rgba(6,10,15,.95);backdrop-filter:blur(20px);border-bottom-color:var(--b1)}
     .nav-inner{max-width:1100px;margin:0 auto;padding:0 var(--px);display:flex;align-items:center;justify-content:space-between;height:64px;gap:1rem}
     .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-    .logo-box{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--gn));display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:14px;color:#000;flex-shrink:0}
+    .logo-box{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--gn));display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:14px;color:#000}
     .logo-text{font-family:var(--fh);font-weight:700;font-size:17px;letter-spacing:-.02em;white-space:nowrap}
-    .nav-links{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
+    .nav-links{display:flex;align-items:center;gap:2px}
     .nav-btn{padding:6px 12px;border-radius:8px;font-size:13px;color:var(--tx2);transition:all .2s;white-space:nowrap}
     .nav-btn:hover{color:var(--tx)}
     .nav-btn.active{color:var(--ac);background:rgba(0,212,255,.08);font-weight:600}
-    .nav-cta{padding:8px 16px;border-radius:8px;background:var(--ac);color:#000!important;font-family:var(--fh);font-weight:700;font-size:13px;margin-left:8px;white-space:nowrap}
-    .hamburger{display:none;flex-direction:column;gap:5px;padding:8px;flex-shrink:0}
+    .nav-cta{padding:8px 16px;border-radius:8px;background:var(--ac);color:#000!important;font-family:var(--fh);font-weight:700;font-size:13px;margin-left:8px}
+    .hamburger{display:none;flex-direction:column;gap:5px;padding:8px}
     .hamburger span{display:block;width:22px;height:2px;background:var(--tx);border-radius:2px;transition:all .3s}
     .mob-menu{display:none;flex-direction:column;gap:2px;padding:.8rem var(--px) 1.2rem;background:var(--bg2);border-top:1px solid var(--b1)}
     .mob-menu.open{display:flex}
-    .mob-btn{padding:10px 12px;border-radius:8px;font-size:14px;text-align:left;color:var(--tx2);transition:background .15s}
+    .mob-btn{padding:10px 12px;border-radius:8px;font-size:14px;text-align:left;color:var(--tx2)}
     .mob-btn.active{color:var(--ac);background:rgba(0,212,255,.08)}
     @media(max-width:768px){.nav-links{display:none}.hamburger{display:flex}}
     .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:calc(64px + 3rem) var(--px) 3rem;position:relative;overflow:hidden}
@@ -60,7 +64,7 @@
     .hero-orb{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:min(500px,90vw);height:min(500px,90vw);border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,.07) 0%,transparent 70%);pointer-events:none}
     .hero-content{position:relative;max-width:min(760px,100%);animation:fadeUp .8s ease}
     .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:20px;padding:5px 14px;margin-bottom:1.4rem;font-family:var(--fm);font-size:11px;color:var(--ac);letter-spacing:.1em}
-    .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:pulse 2s infinite;flex-shrink:0}
+    .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:pulse 2s infinite}
     .hero-sub{font-size:clamp(.95rem,2vw,1.1rem);color:var(--tx2);max-width:520px;margin:0 auto 1.4rem;line-height:1.75}
     .hero-ticker{height:24px;overflow:hidden;margin-bottom:2rem;font-family:var(--fm);font-size:12px;color:var(--tx3)}
     .stats-strip{background:var(--surf);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:1.8rem var(--px)}
@@ -69,842 +73,889 @@
     .stat-val{font-family:var(--fh);font-weight:800;font-size:clamp(1.6rem,4vw,2.2rem);color:var(--ac);letter-spacing:-.03em}
     .stat-lbl{font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.06em;margin-top:4px}
     .feat-card{background:var(--surf);border:1px solid var(--b1);border-radius:var(--r);padding:clamp(1.2rem,3vw,1.6rem);transition:transform .2s,border-color .2s}
-    .feat-icon{font-size:clamp(22px,4vw,28px);margin-bottom:10px}
-    .feat-title{font-family:var(--fh);font-weight:700;font-size:clamp(13px,2vw,15px);margin-bottom:7px}
-    .feat-desc{font-size:13px;color:var(--tx2);line-height:1.65}
     .feed-item{background:var(--bg2);border:1px solid var(--b1);border-radius:9px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:slideIn .3s ease both}
-    .feed-domain{font-family:var(--fm);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-    .feed-label{font-size:10px;font-family:var(--fm);letter-spacing:.08em;margin-top:2px}
-    .feed-score{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:13px;flex-shrink:0}
     .cta-card{max-width:min(540px,100%);margin:0 auto;background:var(--surf);border:1px solid var(--b1);border-radius:20px;padding:clamp(2rem,5vw,3rem) clamp(1.5rem,4vw,2.5rem);text-align:center;position:relative;overflow:hidden}
     .cta-orb{position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,.07) 0%,transparent 70%);pointer-events:none}
-    .cta-btn{display:inline-block;padding:13px clamp(20px,4vw,30px);border-radius:11px;background:linear-gradient(135deg,var(--ac),var(--gn));color:#000;font-family:var(--fh);font-weight:700;font-size:clamp(13px,2vw,15px)}
+    .cta-btn{display:inline-block;padding:13px clamp(20px,4vw,30px);border-radius:11px;background:linear-gradient(135deg,var(--ac),var(--gn));color:#000;font-family:var(--fh);font-weight:700;font-size:clamp(13px,2vw,15px);cursor:pointer;border:none}
     .page-wrap{padding:calc(64px + 2rem) var(--px) 4rem;max-width:1100px;margin:0 auto}
-    .page-header{margin-bottom:1.8rem}
-    .input-wrap{display:flex;gap:8px;background:var(--surf);border:1px solid var(--b2);border-radius:13px;padding:16px;box-shadow:0 0 40px rgba(0,212,255,.05);margin-bottom:1rem;flex-direction:column;align-items:stretch;gap:10px}
-    .url-input{flex:1;background:none;color:var(--tx);font-size:clamp(12px,2vw,14px);font-family:var(--fm);min-width:0}
-    .url-input::placeholder{color:var(--tx3)}
-    .analyze-btn{background:var(--ac);color:#000;font-family:var(--fh);font-weight:700;font-size:13px;padding:10px clamp(12px,3vw,20px);border-radius:9px;white-space:nowrap;flex-shrink:0;transition:background .2s;align-self:flex-end}
-    .analyze-btn:disabled{background:var(--surf2);color:var(--tx3)}
-    .samples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem}
-    .sample-btn{font-size:11px;font-family:var(--fm);background:var(--surf);border:1px solid var(--b1);border-radius:6px;padding:5px 10px;color:var(--tx3);transition:color .15s,border-color .15s}
+    .input-box{background:var(--surf);border:1px solid var(--b2);border-radius:13px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 40px rgba(0,212,255,.05);margin-bottom:1rem}
+    .txt-input{background:none;color:var(--tx);font-size:14px;padding:8px;width:100%}
+    .txt-input::placeholder{color:var(--tx3)}
+    .analyze-btn{background:var(--ac);color:#000;font-family:var(--fh);font-weight:700;font-size:14px;padding:11px 24px;border-radius:9px;align-self:flex-end;border:none;cursor:pointer;transition:opacity .2s}
+    .analyze-btn:disabled{opacity:.4;cursor:not-allowed}
+    .sample-btn{font-size:11px;font-family:var(--fm);background:var(--surf);border:1px solid var(--b1);border-radius:6px;padding:5px 10px;color:var(--tx3);cursor:pointer;transition:all .15s}
+    .sample-btn:hover{color:var(--ac);border-color:var(--ac)}
     .loader-card{background:var(--surf);border:1px solid var(--b1);border-radius:16px;padding:clamp(1.5rem,4vw,2.5rem);animation:fadeUp .3s ease}
-    .loader-inner{display:flex;gap:clamp(1rem,3vw,2rem);align-items:flex-start;flex-wrap:wrap}
-    .spinner-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;flex-shrink:0}
-    .spinner{position:relative;width:64px;height:64px}
+    .spinner{position:relative;width:64px;height:64px;flex-shrink:0}
     .spin-outer{position:absolute;inset:0;border-radius:50%;border:2px solid var(--b2);border-top:2px solid var(--ac);animation:spin .9s linear infinite}
     .spin-inner{position:absolute;inset:8px;border-radius:50%;border:1px solid var(--b1);border-bottom:1px solid var(--gn);animation:spinR 1.4s linear infinite}
-    .steps-list{flex:1;min-width:180px}
-    .step-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;transition:color .3s}
-    .step-num{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--fm);transition:all .3s}
-    .progress-bar{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;margin-top:1.5rem;width:100%}
+    .step-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+    .step-num{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--fm)}
+    .progress-bar{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;margin-top:1.5rem}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--gn));border-radius:2px;transition:width .5s ease;box-shadow:0 0 10px var(--ac)}
     .verdict-card{background:var(--surf);border-radius:16px;padding:clamp(1.2rem,3vw,2rem);margin-bottom:var(--gap);position:relative;overflow:hidden}
-    .verdict-inner{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap}
-    .verdict-text{flex:1;min-width:160px}
     .verdict-val{font-family:var(--fh);font-weight:800;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:-.03em;line-height:1.1}
     .verdict-badge{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:4px 11px;border-radius:5px;font-family:var(--fm);font-size:10px;letter-spacing:.08em}
-    .verdict-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
-    .ring-wrap{position:relative;flex-shrink:0}
-    .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .ring-num{font-family:var(--fh);font-weight:800;line-height:1}
-    .ai-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:1rem 1.1rem;margin-top:1.2rem}
-    .ai-header{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-    .ai-badge{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,var(--ac),var(--gn));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0}
-    .ai-thinking{display:flex;gap:4px;align-items:center}
-    .ai-dot{width:5px;height:5px;border-radius:50%;background:var(--ac)}
     .sig-bar{margin-bottom:1rem}
-    .sig-bar-head{display:flex;justify-content:space-between;margin-bottom:5px;align-items:baseline;gap:8px;flex-wrap:wrap}
-    .sig-bar-label{font-size:13px;font-weight:500}
-    .sig-bar-score{font-family:var(--fm);font-size:13px;font-weight:600;flex-shrink:0}
-    .sig-bar-track{height:5px;background:var(--b1);border-radius:3px;overflow:hidden}
+    .sig-bar-track{height:5px;background:var(--b1);border-radius:3px;overflow:hidden;margin-top:5px}
     .sig-bar-fill{height:100%;border-radius:3px;transition:width 1.3s cubic-bezier(.16,1,.3,1)}
     .meta-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--b1);font-size:12px;gap:8px}
-    .meta-key{color:var(--tx3);flex-shrink:0}
-    .meta-val{font-family:var(--fm);font-size:11px;text-align:right;word-break:break-all}
-    .sig-tags{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:8px}
     .sig-tag{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:8px;font-size:13px;line-height:1.4}
-    .sig-icon{flex-shrink:0;margin-top:1px}
+    .sig-tags{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:8px}
+    .ai-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:1rem 1.1rem;margin-top:1.2rem}
+    .ai-header{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+    .ai-badge{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,var(--ac),var(--gn));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000}
+    .ai-dot{width:5px;height:5px;border-radius:50%;background:var(--ac)}
     .hist-item{display:flex;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--b1);border-radius:9px;padding:9px 13px;cursor:pointer;transition:background .15s;gap:12px}
     .hist-item:hover{background:var(--surf2)}
-    .hist-domain{font-family:var(--fm);font-size:12px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-    .hist-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
-    .phase-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:1.8rem}
-    .phase-tab{padding:7px 13px;border-radius:7px;font-size:12px;font-family:var(--fm);transition:all .2s;white-space:nowrap}
-    .phase-detail{background:var(--surf);border-radius:18px;padding:clamp(1.5rem,4vw,2.5rem);margin-bottom:2.5rem;animation:fadeUp .3s ease}
-    .phase-detail-inner{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
-    @media(max-width:640px){.phase-detail-inner{grid-template-columns:1fr}}
-    .check-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--b1);animation:slideIn .2s ease both}
-    .check-label{font-size:13px;font-weight:500;margin-bottom:2px}
-    .check-desc{font-size:11px;color:var(--tx3)}
-    .pipeline-scroll{display:flex;align-items:center;overflow-x:auto;gap:0;padding:.5rem 0;scrollbar-width:none}
-    .pipeline-scroll::-webkit-scrollbar{display:none}
-    .pipeline-node{flex-shrink:0;width:clamp(100px,18vw,130px);background:var(--surf);border:1px solid var(--b1);border-radius:11px;padding:.9rem;text-align:center;cursor:pointer;transition:all .2s}
-    .pipeline-arrow{flex-shrink:0;color:var(--tx3);font-size:14px;padding:0 4px}
-    .model-row{display:grid;grid-template-columns:1fr minmax(80px,120px) minmax(120px,180px);gap:1rem;padding:12px 0;border-bottom:1px solid var(--b1);align-items:center}
-    @media(max-width:500px){.model-row{grid-template-columns:1fr 80px;gap:.5rem}.model-type{display:none}}
-    .dash-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem}
-    .live-badge{display:flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--b1);border-radius:9px;padding:7px 13px;font-family:var(--fm);font-size:12px;color:var(--tx2)}
-    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:pulse 2s infinite;flex-shrink:0}
-    /* Pure CSS bar chart — no library needed */
-    .bar-chart{display:flex;align-items:flex-end;gap:8px;height:160px;padding:0 4px}
-    .bar-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
-    .bar-label{font-family:var(--fm);font-size:9px;color:var(--tx3)}
-    .bars{display:flex;gap:3px;align-items:flex-end;height:130px}
-    .bar{border-radius:3px 3px 0 0;min-width:8px;flex:1;transition:opacity .2s}
-    .bar:hover{opacity:.7}
-    .legend{display:flex;gap:clamp(8px,2vw,14px);flex-wrap:wrap;margin-top:10px;font-size:11px;font-family:var(--fm);color:var(--tx3)}
-    .legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0}
     .chart-card{background:var(--surf);border:1px solid var(--b1);border-radius:14px;padding:clamp(1rem,3vw,1.5rem)}
-    .pie-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px}
-    .flag-table{width:100%;border-collapse:collapse;font-size:12px;min-width:400px}
-    .flag-th{text-align:left;padding:7px 10px;font-size:10px;color:var(--tx3);font-family:var(--fm);letter-spacing:.08em;font-weight:400;border-bottom:1px solid var(--b1)}
-    .flag-td{padding:11px 10px;border-bottom:1px solid var(--b1)}
-    .flag-badge{font-size:9px;font-family:var(--fm);letter-spacing:.08em;background:rgba(255,51,85,.1);color:var(--rd);border:1px solid rgba(255,51,85,.25);border-radius:4px;padding:3px 7px;white-space:nowrap}
-    .stat-card{background:var(--surf);border:1px solid var(--b1);border-radius:13px;padding:clamp(1.2rem,3vw,1.5rem);text-align:center}
-    .tech-chip{font-size:11px;font-family:var(--fm);background:var(--bg2);border:1px solid var(--b2);border-radius:5px;padding:3px 9px;color:var(--tx2)}
-    .tl-dot{position:absolute;left:-16px;top:5px;width:9px;height:9px;border-radius:50%}
+    .bar-wrap{display:flex;align-items:flex-end;gap:6px;height:140px;padding:0 2px}
+    .bar-grp{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+    .bars-inner{display:flex;gap:2px;align-items:flex-end;height:110px}
+    .bar{border-radius:3px 3px 0 0;min-width:7px;flex:1}
+    .bar:hover{opacity:.7}
+    .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;font-family:var(--fm);color:var(--tx3)}
+    .legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px}
+    .flag-table{width:100%;border-collapse:collapse;font-size:12px;min-width:360px}
+    .flag-th{text-align:left;padding:7px 10px;font-size:10px;color:var(--tx3);font-family:var(--fm);letter-spacing:.08em;border-bottom:1px solid var(--b1)}
+    .flag-td{padding:10px;border-bottom:1px solid var(--b1)}
+    .flag-badge{font-size:9px;font-family:var(--fm);background:rgba(255,51,85,.1);color:var(--rd);border:1px solid rgba(255,51,85,.25);border-radius:4px;padding:3px 7px}
+    .live-badge{display:flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--b1);border-radius:9px;padding:7px 13px;font-family:var(--fm);font-size:12px;color:var(--tx2)}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:pulse 2s infinite}
     .team-card{background:var(--surf);border:1px solid var(--b1);border-radius:13px;padding:clamp(1rem,3vw,1.3rem);text-align:center;transition:transform .2s,border-color .2s}
     .avatar{width:50px;height:50px;border-radius:50%;margin:0 auto .9rem;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:14px}
+    .tech-chip{font-size:11px;font-family:var(--fm);background:var(--bg2);border:1px solid var(--b2);border-radius:5px;padding:3px 9px;color:var(--tx2)}
+    .tl-dot{position:absolute;left:-16px;top:5px;width:9px;height:9px;border-radius:50%}
+    .phase-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:1.8rem}
+    .phase-tab{padding:7px 13px;border-radius:7px;font-size:12px;font-family:var(--fm);transition:all .2s;cursor:pointer;border:none}
+    .phase-detail{background:var(--surf);border-radius:18px;padding:clamp(1.5rem,4vw,2.5rem);margin-bottom:2.5rem;animation:fadeUp .3s ease}
+    .check-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--b1)}
+    .pipeline-scroll{display:flex;align-items:center;overflow-x:auto;padding:.5rem 0;scrollbar-width:none;gap:4px}
+    .pipeline-scroll::-webkit-scrollbar{display:none}
+    .pipeline-node{flex-shrink:0;width:clamp(90px,15vw,120px);background:var(--surf);border:1px solid var(--b1);border-radius:11px;padding:.8rem;text-align:center;cursor:pointer;transition:all .2s}
+    .model-row{display:grid;grid-template-columns:1fr 80px 1fr;gap:1rem;padding:12px 0;border-bottom:1px solid var(--b1);align-items:center}
+    .stat-card{background:var(--surf);border:1px solid var(--b1);border-radius:13px;padding:clamp(1.2rem,3vw,1.5rem);text-align:center}
+    /* Offline banner */
+    .offline-banner{background:rgba(255,136,68,.08);border:1px solid rgba(255,136,68,.3);border-radius:10px;padding:14px 16px;margin-bottom:1rem;font-size:13px;color:var(--or)}
+    .offline-banner a{color:var(--ac);text-decoration:underline}
   </style>
 </head>
 <body>
-  <div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#4a5a6a;font-family:monospace;font-size:13px">Loading TruthLens...</div></div>
-  <script type="text/babel" data-presets="react">
-    // ═══════════════════════════════════════════════════════════
-    // API CONFIG — Gradio 5 uses SSE-based /gradio_api/call/
-    // ═══════════════════════════════════════════════════════════
-    const API_URL = 'https://pankajkr07-fakenewsdetector.hf.space';
-    // app.py has api_name="predict" so endpoint is /gradio_api/call/predict
-    const GRADIO5_ENDPOINT = API_URL + '/gradio_api/call/predict';
-    // Older fallbacks kept just in case
-    const FALLBACK_ENDPOINTS = [
-      API_URL + '/api/predict',
-      API_URL + '/run/predict',
-      API_URL + '/gradio_api/run/predict',
-    ];
+<div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#4a5a6a;font-family:monospace;font-size:13px">Loading TruthLens...</div></div>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef}=React;
 
-    // ── Gradio 5 SSE-based call ──────────────────────────────
-    async function callGradio5(title, content) {
-      // Step 1: POST to get event_id
-      const res = await fetch(GRADIO5_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: [title, content] })
-      });
-      if (!res.ok) throw new Error('Gradio5 POST failed: ' + res.status);
-      const { event_id } = await res.json();
-      if (!event_id) throw new Error('No event_id returned');
+// ═══════════════════════════════════════════════════════════════════
+// BERT API — Gradio 5 SSE protocol
+// HuggingFace Spaces allow browser CORS for gradio_api endpoints
+// ═══════════════════════════════════════════════════════════════════
+const HF_SPACE = 'https://pankajkr07-fakenewsdetector.hf.space';
+const API_ENDPOINT = HF_SPACE + '/gradio_api/call/predict';
 
-      // Step 2: GET SSE stream to get result
-      return new Promise((resolve, reject) => {
-        const evtSource = new EventSource(GRADIO5_ENDPOINT + '/' + event_id);
-        const timeout = setTimeout(() => { evtSource.close(); reject(new Error('SSE timeout')); }, 30000);
-        evtSource.addEventListener('complete', (e) => {
-          clearTimeout(timeout); evtSource.close();
-          try {
-            const parsed = JSON.parse(e.data);
-            resolve(parsed);
-          } catch(err) { reject(err); }
-        });
-        evtSource.addEventListener('error', (e) => {
-          clearTimeout(timeout); evtSource.close();
-          reject(new Error('SSE error'));
-        });
-      });
+async function callBERT(title, content, onStatus) {
+  // Step 1: Wake up the Space
+  onStatus('🔌 Waking HF Space...');
+  try {
+    await fetch(HF_SPACE + '/gradio_api/info', { method: 'GET', mode: 'cors' });
+  } catch(e) {
+    try { await fetch(HF_SPACE, { method: 'GET', mode: 'no-cors' }); } catch {}
+  }
+  await new Promise(r => setTimeout(r, 3000));
+
+  // Step 2: POST to Gradio 5 API → get event_id
+  onStatus('📡 Sending to BERT model...');
+  let event_id;
+  try {
+    const postRes = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ data: [title, content] })
+    });
+    if (!postRes.ok) {
+      throw new Error(`POST failed: HTTP ${postRes.status}`);
     }
+    const postData = await postRes.json();
+    event_id = postData.event_id;
+    if (!event_id) throw new Error('No event_id in response');
+    console.log('✅ Got event_id:', event_id);
+  } catch(e) {
+    console.error('POST failed:', e.message);
+    throw new Error('BERT_POST_FAILED: ' + e.message);
+  }
 
-    // ── Gradio 3/4 REST call ─────────────────────────────────
-    async function callGradioREST(url, title, content) {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: [title, content], fn_index: 0 })
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const json = await res.json();
-      if (!json.data || !Array.isArray(json.data)) throw new Error('Bad shape');
-      return json.data;
-    }
+  // Step 3: SSE stream → wait for 'complete' event
+  onStatus('🧠 BERT running inference...');
+  return new Promise((resolve, reject) => {
+    const sseUrl = `${API_ENDPOINT}/${event_id}`;
+    const evtSrc = new EventSource(sseUrl);
+    const timer = setTimeout(() => {
+      evtSrc.close();
+      reject(new Error('BERT_TIMEOUT'));
+    }, 60000);
 
-    // ── Parse response into result object ────────────────────
-    function parseResponse(rawData) {
-      let raw = rawData[1];
-      if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch { return null; } }
-      if (!raw || typeof raw.real_probability === 'undefined') return null;
-      return raw;
-    }
-
-    function buildResult(title, data) {
-      const credibility = Math.round(data.real_probability * 100);
-      let verdict, label, color;
-      if (credibility >= 70) { verdict='Likely Real'; label='CREDIBLE'; color='#00ff88'; }
-      else if (credibility >= 40) { verdict='Unverified'; label='UNCERTAIN'; color='#ffcc00'; }
-      else if (credibility >= 25) { verdict='Suspicious'; label='SUSPICIOUS'; color='#ff8844'; }
-      else { verdict='Likely Fake'; label='FAKE'; color='#ff3355'; }
-      return {
-        title: title||'Untitled', overall: credibility, verdict, label, color,
-        scores: {
-          heuristic: { score: Math.round((1-data.heuristic_fake)*100), label:'Heuristic Engine', desc: data.heuristic_details||'No red flags' },
-          bert: { score: Math.round(data.bert_real*100), label:'BERT Model', desc:'NLP Context Analysis' },
-          ensemble: { score: credibility, label:'Ensemble Score', desc:'BERT 85% + Heuristic 15%' }
-        },
-        signals: [
-          data.bert_fake > 0.5
-            ? { type:'negative', text:'BERT: High fake probability ('+( data.bert_fake*100).toFixed(1)+'%)' }
-            : { type:'positive', text:'BERT: High real probability ('+(data.bert_real*100).toFixed(1)+'%)' },
-          data.heuristic_fake > 0
-            ? { type:'warning', text:'Heuristic Flags: '+data.heuristic_details }
-            : { type:'positive', text:'No heuristic red flags detected' }
-        ],
-        metadata: {
-          'Model':'BERT-base-uncased (Fine-Tuned)',
-          'Confidence': data.confidence+'%',
-          'BERT Fake %': (data.bert_fake*100).toFixed(1)+'%',
-          'BERT Real %': (data.bert_real*100).toFixed(1)+'%',
-          'Heuristic Risk': (data.heuristic_fake*100).toFixed(1)+'%'
-        }
-      };
-    }
-
-    // ── Main analyze function — tries all methods ────────────
-    async function analyzeContent(title, content, onStatus) {
-      // 1. Wake the space first
-      onStatus('🔌 Waking AI model...');
-      try { await fetch(API_URL, { method:'GET', mode:'no-cors' }); } catch {}
-      await new Promise(r => setTimeout(r, 4000));
-
-      // 2. Try Gradio 5 SSE endpoint first
-      onStatus('🧠 Trying Gradio 5 API...');
+    evtSrc.addEventListener('complete', (e) => {
+      clearTimeout(timer); evtSrc.close();
       try {
-        const data = await callGradio5(title, content);
-        const parsed = parseResponse(data);
-        if (parsed) { console.log('✅ Gradio 5 success'); return buildResult(title, parsed); }
-      } catch(e) { console.warn('Gradio5 failed:', e.message); }
+        const parsed = JSON.parse(e.data);
+        // parsed.data = [html_string, json_object]
+        let jsonResult = parsed.data ? parsed.data[1] : null;
+        if (typeof jsonResult === 'string') {
+          try { jsonResult = JSON.parse(jsonResult); } catch {}
+        }
+        if (!jsonResult || jsonResult.real_probability === undefined) {
+          reject(new Error('BERT_BAD_RESPONSE'));
+        } else {
+          console.log('✅ BERT result:', jsonResult);
+          resolve(jsonResult);
+        }
+      } catch(err) { reject(new Error('BERT_PARSE_ERROR: ' + err.message)); }
+    });
 
-      // 3. Fallback to REST endpoints
-      for (const url of FALLBACK_ENDPOINTS) {
-        onStatus('🔄 Trying fallback: ' + url.split('/').pop() + '...');
-        try {
-          const data = await callGradioREST(url, title, content);
-          const parsed = parseResponse(data);
-          if (parsed) { console.log('✅ REST success via', url); return buildResult(title, parsed); }
-        } catch(e) { console.warn(url, 'failed:', e.message); }
-        await new Promise(r => setTimeout(r, 2000));
-      }
+    evtSrc.addEventListener('error', (e) => {
+      clearTimeout(timer); evtSrc.close();
+      reject(new Error('BERT_SSE_ERROR'));
+    });
 
-      // 4. All failed
-      console.error('All API attempts failed');
-      return {
-        title: title||'Untitled', overall:0, verdict:'API Unreachable', label:'OFFLINE', color:'#ff8844',
-        scores: {
-          heuristic:{score:0,label:'Heuristic Engine',desc:'Unavailable'},
-          bert:{score:0,label:'BERT Model',desc:'Unavailable'},
-          ensemble:{score:0,label:'Ensemble Score',desc:'Unavailable'}
-        },
-        signals:[
-          {type:'warning',text:'HuggingFace Space is sleeping or unreachable.'},
-          {type:'warning',text:'Open https://pankajkr07-fakenewsdetector.hf.space, wait 30s for "Running" status, then retry.'}
-        ],
-        metadata:{'Status':'Space Offline','Action':'Open HF Space, wait for Running badge, retry'}
-      };
+    // Also handle 'process_completed' for older Gradio versions
+    evtSrc.addEventListener('process_completed', (e) => {
+      clearTimeout(timer); evtSrc.close();
+      try {
+        const parsed = JSON.parse(e.data);
+        let jsonResult = parsed.output ? parsed.output.data[1] : null;
+        if (typeof jsonResult === 'string') try { jsonResult = JSON.parse(jsonResult); } catch {}
+        if (jsonResult && jsonResult.real_probability !== undefined) resolve(jsonResult);
+        else reject(new Error('BERT_BAD_RESPONSE_V4'));
+      } catch(err) { reject(new Error('BERT_PARSE_V4: ' + err.message)); }
+    });
+  });
+}
+
+// Build result from BERT JSON response
+function buildResult(title, data) {
+  const credibility = Math.round(data.real_probability * 100);
+  let verdict, label, color;
+  if (credibility >= 70) { verdict='Likely Real'; label='CREDIBLE'; color='#00ff88'; }
+  else if (credibility >= 40) { verdict='Unverified'; label='UNCERTAIN'; color='#ffcc00'; }
+  else if (credibility >= 25) { verdict='Suspicious'; label='SUSPICIOUS'; color='#ff8844'; }
+  else { verdict='Likely Fake'; label='FAKE'; color='#ff3355'; }
+  return {
+    title: title||'Untitled', overall:credibility, verdict, label, color,
+    isBERT: true,
+    scores:{
+      heuristic:{score:Math.round((1-data.heuristic_fake)*100),label:'Heuristic Engine',desc:data.heuristic_details||'No red flags'},
+      bert:{score:Math.round(data.bert_real*100),label:'BERT Model',desc:'bert-base-uncased WELFake'},
+      ensemble:{score:credibility,label:'Ensemble Score',desc:'BERT 85% + Heuristic 15%'}
+    },
+    signals:[
+      data.bert_fake>0.5?{type:'negative',text:`BERT Fake: ${(data.bert_fake*100).toFixed(1)}%`}:{type:'positive',text:`BERT Real: ${(data.bert_real*100).toFixed(1)}%`},
+      data.heuristic_fake>0?{type:'warning',text:'Heuristic: '+data.heuristic_details}:{type:'positive',text:'No heuristic red flags'}
+    ],
+    metadata:{
+      'Model':'bert-base-uncased (WELFake)',
+      'Confidence':data.confidence+'%',
+      'BERT Fake':(data.bert_fake*100).toFixed(1)+'%',
+      'BERT Real':(data.bert_real*100).toFixed(1)+'%',
+      'Heuristic':(data.heuristic_fake*100).toFixed(1)+'%'
     }
+  };
+}
 
-    const { useState, useEffect, useRef } = React;
-    function useWindowWidth() {
-      const [w,setW]=useState(window.innerWidth);
-      useEffect(()=>{const h=()=>setW(window.innerWidth);window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h)},[]);
-      return w;
+// ═══════════════════════════════════════════════════════════════════
+// FALLBACK: Heuristic-only (when BERT API fails)
+// Same logic as app.py heuristic_score()
+// ═══════════════════════════════════════════════════════════════════
+const CONSPIRACY_PHRASES=[
+  "they don't want you to know","wake up","share before deleted","deep state","cover up",
+  "mainstream media hiding","bombshell","whistleblower","classified document","microchip",
+  "population control","new world order","government hiding","censored","banned video",
+  "truth revealed","global conspiracy","secret underground","fake pandemic","5g tower",
+  "poison water","depopulation","shadow government","false flag","staged attack",
+  "crisis actor","illuminati","chemtrail","mind control","breaking news","shocking truth"
+];
+const FAKE_KW=['hoax','conspiracy','leaked','classified','bombshell','shocking','exposed',
+  'they don\'t','hidden agenda','mainstream media','fake pandemic','crisis actor','deep state',
+  'new world order','share before','banned','censored','wake up','illuminati','chemtrail',
+  'microchip','depopulation','shadow government','false flag','staged','underground',
+  'whistleblower','anonymous sources','insider reveals','government admits'];
+const REAL_KW=['according to','reported by','confirmed','announced','official','government said',
+  'spokesperson','data shows','research indicates','study finds','percent','million','billion',
+  'policy','legislation','conference','the company','published','journal','source said',
+  'officials said','statement','report','analysis','survey','committee','investigation'];
+
+function heuristicFallback(title, content) {
+  const text=`${title}. ${content}`.trim();
+  const lower=text.toLowerCase();
+  let hScore=0; const hDetails=[];
+  const phrases=CONSPIRACY_PHRASES.filter(p=>lower.includes(p)).length;
+  if(phrases>=3){hScore+=0.40;hDetails.push(`Conspiracy phrases: ${phrases}`);}
+  else if(phrases>=1){hScore+=0.20;hDetails.push(`Conspiracy phrases: ${phrases}`);}
+  const alpha=[...text].filter(c=>/[a-zA-Z]/.test(c));
+  if(alpha.length){
+    const caps=alpha.filter(c=>c===c.toUpperCase()).length/alpha.length;
+    if(caps>0.4){hScore+=0.25;hDetails.push(`High caps: ${caps.toFixed(2)}`);}
+    else if(caps>0.25){hScore+=0.10;hDetails.push(`Elevated caps: ${caps.toFixed(2)}`);}
+  }
+  const words=text.split(/\s+/);
+  if(words.length){
+    const excl=(text.match(/!/g)||[]).length/words.length;
+    if(excl>0.1){hScore+=0.20;hDetails.push(`High exclamation: ${excl.toFixed(2)}`);}
+    else if(excl>0.05){hScore+=0.10;hDetails.push(`Elevated exclamation: ${excl.toFixed(2)}`);}
+  }
+  hScore=Math.min(hScore,1.0);
+  const fakeKw=FAKE_KW.filter(k=>lower.includes(k)).length;
+  const realKw=REAL_KW.filter(k=>lower.includes(k)).length;
+  const total=Math.max(fakeKw+realKw,1);
+  let bertLike=fakeKw/total*0.8+(fakeKw>0?0.1:0);
+  if(realKw>fakeKw*2)bertLike=Math.max(0.05,bertLike-0.3);
+  if(fakeKw>realKw*2)bertLike=Math.min(0.95,bertLike+0.2);
+  bertLike=Math.max(0.05,Math.min(0.95,bertLike));
+  const combinedFake=bertLike*0.70+hScore*0.30;
+  const credibility=Math.round((1-combinedFake)*100);
+  let verdict,label,color;
+  if(credibility>=70){verdict='Likely Real';label='CREDIBLE';color='#00ff88';}
+  else if(credibility>=40){verdict='Unverified';label='UNCERTAIN';color='#ffcc00';}
+  else if(credibility>=25){verdict='Suspicious';label='SUSPICIOUS';color='#ff8844';}
+  else{verdict='Likely Fake';label='FAKE';color='#ff3355';}
+  return{
+    title:title||'Untitled',overall:credibility,verdict,label,color,isBERT:false,
+    scores:{
+      heuristic:{score:Math.round((1-hScore)*100),label:'Heuristic Engine',desc:hDetails.join('; ')||'No red flags'},
+      bert:{score:Math.round((1-bertLike)*100),label:'Pattern Analysis',desc:'Fallback (BERT unavailable)'},
+      ensemble:{score:credibility,label:'Combined Score',desc:'Pattern 70% + Heuristic 30%'}
+    },
+    signals:[
+      bertLike>0.5?{type:'negative',text:`Pattern: Fake signals (${(bertLike*100).toFixed(1)}%)`}:{type:'positive',text:`Pattern: Real signals (${((1-bertLike)*100).toFixed(1)}%)`},
+      hScore>0?{type:'warning',text:'Flags: '+hDetails.join('; ')}:{type:'positive',text:'No heuristic red flags'}
+    ],
+    metadata:{
+      'Mode':'⚠️ Fallback (BERT offline)','Pattern Score':(bertLike*100).toFixed(1)+'% fake',
+      'Heuristic Risk':(hScore*100).toFixed(1)+'%','Conspiracy Phrases':phrases+' found'
     }
+  };
+}
 
-    function ScoreRing({score,size,color}){
-      const sz=size||120;
-      const [cur,setCur]=useState(0);
-      const r=sz/2-8,circ=2*Math.PI*r,offset=circ-(cur/100)*circ;
-      useEffect(()=>{const t=setTimeout(()=>setCur(score),200);return()=>clearTimeout(t)},[score]);
-      return(
-        <div style={{position:'relative',width:sz,height:sz,flexShrink:0}}>
-          <svg width={sz} height={sz} style={{transform:'rotate(-90deg)',position:'absolute',inset:0}}>
-            <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--b2)" strokeWidth={7}/>
-            <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke={color} strokeWidth={7} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{transition:'stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)',filter:`drop-shadow(0 0 8px ${color}66)`}}/>
-          </svg>
-          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-            <div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:sz<100?22:28,color,lineHeight:1}}>{cur}</div>
-            <div style={{fontSize:9,color:'var(--tx3)',fontFamily:'var(--fm)',marginTop:2}}>/100</div>
+// ── Main analysis function ──────────────────────────────────────────
+async function analyzeArticle(title, content, onStatus) {
+  try {
+    const bertData = await callBERT(title, content, onStatus);
+    onStatus('✅ BERT analysis complete!');
+    return buildResult(title, bertData);
+  } catch(e) {
+    console.warn('BERT failed, using fallback:', e.message);
+    onStatus('⚠️ BERT unavailable — using heuristic fallback...');
+    await new Promise(r=>setTimeout(r,800));
+    return heuristicFallback(title, content);
+  }
+}
+
+// ── UI Components ───────────────────────────────────────────────────
+function useWindowWidth(){
+  const [w,setW]=useState(window.innerWidth);
+  useEffect(()=>{const h=()=>setW(window.innerWidth);window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h)},[]);
+  return w;
+}
+
+function ScoreRing({score,color}){
+  const sz=120,r=sz/2-8,circ=2*Math.PI*r;
+  const [cur,setCur]=useState(0);
+  const offset=circ-(cur/100)*circ;
+  useEffect(()=>{const t=setTimeout(()=>setCur(score),200);return()=>clearTimeout(t)},[score]);
+  return(
+    <div style={{position:'relative',width:sz,height:sz,flexShrink:0}}>
+      <svg width={sz} height={sz} style={{transform:'rotate(-90deg)',position:'absolute',inset:0}}>
+        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--b2)" strokeWidth={7}/>
+        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke={color} strokeWidth={7}
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{transition:'stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)',filter:`drop-shadow(0 0 8px ${color}66)`}}/>
+      </svg>
+      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+        <div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:28,color,lineHeight:1}}>{cur}</div>
+        <div style={{fontSize:9,color:'var(--tx3)',fontFamily:'var(--fm)',marginTop:2}}>/100</div>
+      </div>
+    </div>
+  );
+}
+
+function SignalBar({label,desc,score}){
+  const [w,setW]=useState(0);
+  useEffect(()=>{const t=setTimeout(()=>setW(score),130);return()=>clearTimeout(t)},[score]);
+  const c=score>=70?'#00ff88':score>=45?'#ffcc00':'#ff3355';
+  return(
+    <div className="sig-bar">
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:5,alignItems:'baseline',gap:8,flexWrap:'wrap'}}>
+        <div><span style={{fontSize:13,fontWeight:500}}>{label}</span>
+        <span style={{fontSize:11,color:'var(--tx3)',marginLeft:6}} className="hide-sm">{desc}</span></div>
+        <span style={{fontFamily:'var(--fm)',fontSize:13,fontWeight:600,color:c}}>{score}</span>
+      </div>
+      <div className="sig-bar-track">
+        <div className="sig-bar-fill" style={{width:w+'%',background:`linear-gradient(90deg,${c}88,${c})`,boxShadow:`0 0 8px ${c}44`}}/>
+      </div>
+    </div>
+  );
+}
+
+function SigTag({type,text}){
+  const s={positive:{bg:'rgba(0,255,136,.07)',border:'rgba(0,255,136,.2)',color:'#00ff88',icon:'✓'},
+    warning:{bg:'rgba(255,204,0,.07)',border:'rgba(255,204,0,.2)',color:'#ffcc00',icon:'⚠'},
+    negative:{bg:'rgba(255,51,85,.07)',border:'rgba(255,51,85,.2)',color:'#ff3355',icon:'✗'}}[type]||{};
+  return<div className="sig-tag" style={{background:s.bg,border:`1px solid ${s.border}`}}>
+    <span style={{color:s.color,flexShrink:0}}>{s.icon}</span>
+    <span style={{color:s.color}}>{text}</span>
+  </div>;
+}
+
+function AiInsight({result}){
+  const [text,setText]=useState('');const [loading,setLoading]=useState(true);
+  useEffect(()=>{
+    setText('');setLoading(true);
+    const t=setTimeout(()=>{
+      setLoading(false);
+      const engine=result.isBERT?'BERT model (bert-base-uncased, WELFake fine-tuned)':'Pattern analysis (BERT unavailable)';
+      if(result.overall>=70)setText(`Score: ${result.overall}/100 — ${engine} detected strong real-news indicators. No conspiracy phrases, excessive capitalization, or clickbait patterns found. Content appears consistent with legitimate journalism.`);
+      else if(result.overall>=40)setText(`Score: ${result.overall}/100 — ${engine} returned mixed signals. Some suspicious patterns detected. Independent verification from trusted sources is recommended.`);
+      else setText(`Score: ${result.overall}/100 — ${engine} detected patterns strongly associated with misinformation. Conspiracy phrases, sensational language, or clickbait structures were identified. Treat with significant caution.`);
+    },1000);
+    return()=>clearTimeout(t);
+  },[result.title,result.overall]);
+  return(
+    <div className="ai-box">
+      <div className="ai-header">
+        <div className="ai-badge">{result.isBERT?'AI':'⚠'}</div>
+        <span style={{fontSize:11,fontFamily:'var(--fm)',color:result.isBERT?'var(--ac)':'var(--or)',letterSpacing:'.08em'}}>
+          {result.isBERT?'BERT ANALYSIS':'FALLBACK ANALYSIS'}
+        </span>
+        {loading&&<span style={{fontSize:11,color:'var(--tx3)',marginLeft:'auto'}}>Thinking...</span>}
+      </div>
+      {loading?<div style={{display:'flex',gap:4,alignItems:'center'}}>{[0,1,2].map(i=><div key={i} className="ai-dot" style={{animation:`pulse 1s infinite ${i*.15}s`}}/>)}</div>
+      :<p style={{fontSize:13,color:'var(--tx2)',lineHeight:1.75,margin:0}}>{text}</p>}
+    </div>
+  );
+}
+
+function Navbar({page,setPage}){
+  const [scrolled,setScrolled]=useState(false);const [open,setOpen]=useState(false);
+  useEffect(()=>{const h=()=>setScrolled(window.scrollY>20);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h)},[]);
+  useEffect(()=>setOpen(false),[page]);
+  const links=[['home','Home'],['detect','Detect'],['how','How It Works'],['dashboard','Dashboard'],['about','About']];
+  return(
+    <>
+      <nav id="navbar" className={scrolled?'scrolled':''}>
+        <div className="nav-inner">
+          <button className="nav-logo" onClick={()=>setPage('home')}>
+            <div className="logo-box">TL</div>
+            <span className="logo-text">Truth<span style={{color:'var(--ac)'}}>Lens</span></span>
+          </button>
+          <div className="nav-links">
+            {links.map(([p,l])=><button key={p} className={`nav-btn${page===p?' active':''}`} onClick={()=>setPage(p)}>{l}</button>)}
+            <button className="nav-btn nav-cta" onClick={()=>setPage('detect')}>Analyze Now</button>
+          </div>
+          <button className="hamburger" onClick={()=>setOpen(o=>!o)} aria-label="Menu">
+            {[0,1,2].map(i=><span key={i} style={{transform:open&&i===0?'rotate(45deg) translate(5px,5px)':open&&i===2?'rotate(-45deg) translate(5px,-5px)':'none',opacity:open&&i===1?0:1}}/>)}
+          </button>
+        </div>
+        <div className={`mob-menu${open?' open':''}`}>
+          {links.map(([p,l])=><button key={p} className={`mob-btn${page===p?' active':''}`} onClick={()=>setPage(p)}>{l}</button>)}
+          <button className="mob-btn" onClick={()=>setPage('detect')} style={{color:'var(--ac)',fontWeight:600,marginTop:4}}>→ Analyze Now</button>
+        </div>
+      </nav>
+    </>
+  );
+}
+
+const TICKER=['Real BERT model — bert-base-uncased','Fine-tuned on WELFake Dataset (72K articles)','Rule-based Conspiracy Heuristic Engine','Ensemble: BERT 85% + Heuristic 15%','Gradio 5 SSE API integration'];
+const FEATURES=[
+  {icon:'🧠',title:'Real BERT Model',desc:'bert-base-uncased fine-tuned on WELFake Dataset (72,134 articles). Runs on HuggingFace Spaces.',color:'#00ff88'},
+  {icon:'📝',title:'Title & Content',desc:'Paste headline and full article text for maximum accuracy.',color:'#00d4ff'},
+  {icon:'🔍',title:'Heuristic Engine',desc:'36+ conspiracy phrases, caps ratio, exclamation density — same as backend.',color:'#ff8844'},
+  {icon:'📊',title:'Ensemble Scoring',desc:'BERT 85% + Heuristic 15% — proven formula from WELFake research.',color:'#ffcc00'},
+  {icon:'🔄',title:'Smart Fallback',desc:'If BERT API is sleeping, browser-based heuristic model activates automatically.',color:'#ff3355'},
+  {icon:'⚡',title:'Gradio 5 API',desc:'Uses SSE-based /gradio_api/call/predict — the correct Gradio 5 protocol.',color:'#a855f7'},
+];
+const LFEED=[{title:'NASA Confirms Giant Asteroid',label:'FAKE',score:8,color:'#ff3355'},{title:'Reserve Bank holds interest rate',label:'CREDIBLE',score:94,color:'#00ff88'},{title:'Bill Gates Admits Microchips',label:'FAKE',score:11,color:'#ff3355'},{title:'ISRO launches NVS-02 satellite',label:'CREDIBLE',score:97,color:'#00ff88'}];
+
+function Home({setPage,setInitData}){
+  const [ti,setTi]=useState(0);const [title,setTitle]=useState('');const [content,setContent]=useState('');
+  useEffect(()=>{const t=setInterval(()=>setTi(i=>(i+1)%TICKER.length),3000);return()=>clearInterval(t)},[]);
+  function go(){if(content.trim()||title.trim())setInitData({title:title.trim(),content:content.trim()});setPage('detect');}
+  return(
+    <div>
+      <section className="hero">
+        <div className="hero-grid-bg"/><div className="hero-orb"/>
+        <div className="hero-content">
+          <div className="hero-badge"><span className="hero-badge-dot"/>REAL BERT MODEL — HUGGINGFACE SPACES</div>
+          <h1 className="h1" style={{marginBottom:'1rem'}}>Don't Share What{' '}<span style={{background:'linear-gradient(135deg,#00d4ff,#00ff88)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>Isn't True</span></h1>
+          <p className="hero-sub">Powered by real BERT NLP model fine-tuned on 72K articles. Paste any news article to get an instant credibility verdict.</p>
+          <div className="hero-ticker"><span key={ti} style={{display:'block',animation:'fadeUp .4s ease'}}>→ {TICKER[ti]}</span></div>
+          <div style={{maxWidth:'min(540px,100%)',margin:'0 auto',background:'var(--surf)',border:'1px solid var(--b2)',borderRadius:14,padding:16,display:'flex',flexDirection:'column',gap:12,textAlign:'left'}}>
+            <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="News Headline (optional)" style={{background:'none',color:'var(--tx)',fontSize:15,padding:8,outline:'none',border:'none',borderBottom:'1px solid var(--b1)',fontFamily:'inherit',width:'100%'}}/>
+            <textarea value={content} onChange={e=>setContent(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}} placeholder="Paste article content here..." style={{fontSize:14,padding:8,minHeight:80,resize:'vertical',border:'none',outline:'none',background:'transparent',fontFamily:'inherit',color:'var(--tx)',width:'100%'}}/>
+            <button onClick={go} style={{background:'var(--ac)',color:'#000',fontFamily:'var(--fh)',fontWeight:700,fontSize:15,padding:'12px 24px',borderRadius:10,alignSelf:'flex-end',cursor:'pointer',border:'none'}}>Analyze →</button>
           </div>
         </div>
-      );
-    }
-
-    function SignalBar({label,desc,score}){
-      const [w,setW]=useState(0);
-      useEffect(()=>{const t=setTimeout(()=>setW(score),130);return()=>clearTimeout(t)},[score]);
-      const c=score>=70?'#00ff88':score>=45?'#ffcc00':'#ff3355';
-      return(
-        <div className="sig-bar">
-          <div className="sig-bar-head">
-            <div><span className="sig-bar-label">{label}</span><span style={{fontSize:11,color:'var(--tx3)',marginLeft:6}} className="hide-sm">{desc}</span></div>
-            <span className="sig-bar-score" style={{color:c}}>{score}</span>
-          </div>
-          <div className="sig-bar-track">
-            <div className="sig-bar-fill" style={{width:w+'%',background:`linear-gradient(90deg,${c}88,${c})`,boxShadow:`0 0 8px ${c}44`}}/>
-          </div>
+      </section>
+      <div className="stats-strip">
+        <div className="wrap">
+          {[['96.0%','BERT Accuracy'],['72,134','Training Articles'],['85 / 15','Ensemble Weights'],['256','Token Length']].map(([v,l])=>(
+            <div key={l}><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
+          ))}
         </div>
-      );
-    }
-
-    function SigTag({type,text}){
-      const s={positive:{bg:'rgba(0,255,136,.07)',border:'rgba(0,255,136,.2)',color:'#00ff88',icon:'✓'},warning:{bg:'rgba(255,204,0,.07)',border:'rgba(255,204,0,.2)',color:'#ffcc00',icon:'⚠'},negative:{bg:'rgba(255,51,85,.07)',border:'rgba(255,51,85,.2)',color:'#ff3355',icon:'✗'}}[type]||{};
-      return <div className="sig-tag" style={{background:s.bg,border:`1px solid ${s.border}`}}><span className="sig-icon" style={{color:s.color}}>{s.icon}</span><span style={{color:s.color}}>{text}</span></div>;
-    }
-
-    function AiInsight({result}){
-      const [text,setText]=useState('');const [loading,setLoading]=useState(true);
-      useEffect(()=>{
-        setText('');setLoading(true);
-        const t=setTimeout(()=>{
-          setLoading(false);
-          if(result.overall>=70) setText(`This article scores ${result.overall}/100 (${result.verdict}). BERT detected high textual authenticity. The heuristic engine found no conspiracy phrases, excessive capitalization, or clickbait patterns. Content appears consistent with legitimate journalism.`);
-          else if(result.overall>=40) setText(`This article scores ${result.overall}/100 (${result.verdict}). BERT returned mixed signals. Some heuristic flags may have been triggered. The ensemble score reflects moderate uncertainty — verify from trusted sources.`);
-          else setText(`This article scores ${result.overall}/100 (${result.verdict}). BERT detected patterns strongly consistent with misinformation. The heuristic engine likely caught conspiracy phrases, excessive capitalization, or clickbait punctuation. Treat this content with caution.`);
-        },1200);
-        return()=>clearTimeout(t);
-      },[result.title,result.overall]);
-      return(
-        <div className="ai-box">
-          <div className="ai-header">
-            <div className="ai-badge">AI</div>
-            <span style={{fontSize:11,fontFamily:'var(--fm)',color:'var(--ac)',letterSpacing:'.08em'}}>AI EXPERT ANALYSIS</span>
-            {loading&&<span style={{fontSize:11,color:'var(--tx3)',marginLeft:'auto'}}>Thinking...</span>}
-          </div>
-          {loading?<div className="ai-thinking">{[0,1,2].map(i=><div key={i} className="ai-dot" style={{animation:`pulse 1s infinite ${i*.15}s`}}/>)}</div>
-          :<p style={{fontSize:13,color:'var(--tx2)',lineHeight:1.75,margin:0}}>{text}</p>}
-        </div>
-      );
-    }
-
-    function Navbar({page,setPage}){
-      const [scrolled,setScrolled]=useState(false);const [open,setOpen]=useState(false);
-      useEffect(()=>{const h=()=>setScrolled(window.scrollY>20);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h)},[]);
-      useEffect(()=>setOpen(false),[page]);
-      const links=[['home','Home'],['detect','Detect'],['how','How It Works'],['dashboard','Dashboard'],['about','About']];
-      return(
-        <>
-          <nav id="navbar" className={scrolled?'scrolled':''}>
-            <div className="nav-inner">
-              <button className="nav-logo" onClick={()=>setPage('home')}>
-                <div className="logo-box">TL</div>
-                <span className="logo-text">Truth<span style={{color:'var(--ac)'}}>Lens</span></span>
-              </button>
-              <div className="nav-links">
-                {links.map(([p,l])=><button key={p} className={`nav-btn${page===p?' active':''}`} onClick={()=>setPage(p)}>{l}</button>)}
-                <button className="nav-btn nav-cta" onClick={()=>setPage('detect')}>Analyze Now</button>
-              </div>
-              <button className="hamburger" onClick={()=>setOpen(o=>!o)} aria-label="Menu">
-                {[0,1,2].map(i=><span key={i} style={{transform:open&&i===0?'rotate(45deg) translate(5px,5px)':open&&i===2?'rotate(-45deg) translate(5px,-5px)':'none',opacity:open&&i===1?0:1}}/>)}
-              </button>
-            </div>
-            <div className={`mob-menu${open?' open':''}`}>
-              {links.map(([p,l])=><button key={p} className={`mob-btn${page===p?' active':''}`} onClick={()=>setPage(p)}>{l}</button>)}
-              <button className="mob-btn" onClick={()=>setPage('detect')} style={{color:'var(--ac)',fontWeight:600,marginTop:4}}>→ Analyze Now</button>
-            </div>
-          </nav>
-        </>
-      );
-    }
-
-    const TICKER=['AI-powered fake news detection','Fine-tuned BERT (bert-base-uncased)','Rule-based Conspiracy Heuristic Engine','Trained on 72K+ WELFake dataset articles','Ensemble Model: BERT (85%) + Heuristic (15%)'];
-    const FEATURES=[
-      {icon:'📝',title:'Title & Content Support',desc:'Paste the news headline and full article text for precise analysis.',color:'#00d4ff'},
-      {icon:'🧠',title:'BERT NLP Model',desc:'bert-base-uncased fine-tuned on the WELFake Dataset (72,134 articles) for high accuracy.',color:'#00ff88'},
-      {icon:'🔍',title:'Heuristic Engine',desc:'Scans for conspiracy phrases, clickbait patterns, and suspicious capitalization ratios.',color:'#ff8844'},
-      {icon:'📊',title:'Ensemble Approach',desc:'Combines BERT (85%) with rule-based heuristics (15%) for reliable results.',color:'#ffcc00'},
-      {icon:'🛡️',title:'Reliable Output',desc:'Provides FAKE, SUSPICIOUS, or REAL verdicts with detailed confidence scores.',color:'#ff3355'},
-      {icon:'⚡',title:'Hugging Face API',desc:'Backend runs on Hugging Face Spaces using Gradio 5 + PyTorch.',color:'#a855f7'},
-    ];
-    const LFEED=[{title:'NASA Confirms Giant Asteroid',label:'FAKE',score:8,color:'#ff3355'},{title:'Reserve Bank holds interest rate',label:'CREDIBLE',score:94,color:'#00ff88'},{title:'Bill Gates Admits Microchips',label:'FAKE',score:11,color:'#ff3355'},{title:'ISRO successfully launches NVS-02',label:'CREDIBLE',score:97,color:'#00ff88'}];
-
-    function Home({setPage,setInitData}){
-      const [ti,setTi]=useState(0);const [title,setTitle]=useState('');const [content,setContent]=useState('');
-      useEffect(()=>{const t=setInterval(()=>setTi(i=>(i+1)%TICKER.length),3000);return()=>clearInterval(t)},[]);
-      function go(){if(content.trim()||title.trim())setInitData({title:title.trim(),content:content.trim()});setPage('detect');}
-      return(
-        <div>
-          <section className="hero">
-            <div className="hero-grid-bg"/><div className="hero-orb"/>
-            <div className="hero-content">
-              <div className="hero-badge"><span className="hero-badge-dot"/>AI-POWERED FAKE NEWS DETECTION</div>
-              <h1 className="h1" style={{marginBottom:'1rem'}}>Don't Share What{' '}<span style={{background:'linear-gradient(135deg,#00d4ff,#00ff88)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>Isn't True</span></h1>
-              <p className="hero-sub">Paste a news article title and content to get a credibility verdict. Powered by BERT NLP and heuristic ensemble models.</p>
-              <div className="hero-ticker"><span key={ti} style={{display:'block',animation:'fadeUp .4s ease'}}>→ {TICKER[ti]}</span></div>
-              <div style={{maxWidth:'min(540px,100%)',margin:'0 auto',background:'var(--surf)',border:'1px solid var(--b2)',borderRadius:14,padding:16,display:'flex',flexDirection:'column',gap:12,textAlign:'left'}}>
-                <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="News Headline (optional)" style={{background:'none',color:'var(--tx)',fontSize:15,padding:8,borderBottom:'1px solid var(--b1)',outline:'none',border:'none',borderBottom:'1px solid var(--b1)',fontFamily:'inherit'}}/>
-                <textarea value={content} onChange={e=>setContent(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}} placeholder="Paste article content here..." style={{fontSize:14,padding:8,minHeight:80,resize:'vertical',border:'none',outline:'none',background:'transparent',fontFamily:'inherit',color:'var(--tx)'}}/>
-                <button onClick={go} style={{background:'var(--ac)',color:'#000',fontFamily:'var(--fh)',fontWeight:700,fontSize:15,padding:'12px 24px',borderRadius:10,alignSelf:'flex-end',cursor:'pointer',border:'none'}}>Analyze →</button>
-              </div>
-            </div>
-          </section>
-          <div className="stats-strip">
-            <div className="wrap">
-              {[['96.0%','BERT Test Accuracy'],['72,134','Dataset Articles'],['85 / 15','Ensemble Weighting'],['256','Max Token Length']].map(([v,l])=>(
-                <div key={l}><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
-              ))}
-            </div>
-          </div>
-          <div className="section wrap">
-            <div style={{textAlign:'center',marginBottom:'2.5rem'}}>
-              <div className="label" style={{marginBottom:10}}>DETECTION SYSTEM</div>
-              <h2 className="h2">Six layers of verification</h2>
-            </div>
-            <div className="grid-auto">
-              {FEATURES.map((f,i)=>(
-                <div key={i} className="feat-card" style={{borderLeft:`3px solid ${f.color}22`}} onMouseEnter={e=>{e.currentTarget.style.borderColor=f.color+'55';e.currentTarget.style.transform='translateY(-3px)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=f.color+'22';e.currentTarget.style.transform='none'}}>
-                  <div className="feat-icon">{f.icon}</div>
-                  <div className="feat-title" style={{color:f.color}}>{f.title}</div>
-                  <div className="feat-desc">{f.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{background:'var(--surf)',borderTop:'1px solid var(--b1)',borderBottom:'1px solid var(--b1)',padding:'2.5rem var(--px)'}}>
-            <div className="wrap">
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.2rem',flexWrap:'wrap',gap:8}}>
-                <div><div className="label" style={{marginBottom:4}}>LIVE FEED</div><h2 className="h3" style={{fontSize:'clamp(15px,3vw,18px)'}}>Recent Analyses</h2></div>
-                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--tx3)',fontFamily:'var(--fm)'}}>
-                  <span style={{width:6,height:6,borderRadius:'50%',background:'#00ff88',animation:'pulse 2s infinite',display:'inline-block'}}/>LIVE
-                </div>
-              </div>
-              <div className="grid-auto">
-                {LFEED.map((r,i)=>(
-                  <div key={i} className="feed-item" style={{borderLeft:`3px solid ${r.color}`,animationDelay:`${i*.06}s`}}>
-                    <div style={{minWidth:0}}><div className="feed-domain" style={{color:'var(--tx)'}}>{r.title}</div><div className="feed-label" style={{color:r.color}}>{r.label}</div></div>
-                    <div className="feed-score" style={{background:r.color+'18',border:`2px solid ${r.color}44`,color:r.color}}>{r.score}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="section wrap">
-            <div className="cta-card">
-              <div className="cta-orb"/>
-              <h2 className="h2" style={{marginBottom:'.8rem',fontSize:'clamp(1.4rem,4vw,2rem)'}}>Start verifying news now</h2>
-              <p style={{color:'var(--tx2)',marginBottom:'1.8rem',fontSize:14}}>Free to use. No account required. Just paste the article content.</p>
-              <button className="cta-btn" onClick={()=>setPage('detect')}>Detect Fake News →</button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    const STEPS=[{label:'Preparing text',icon:'📝'},{label:'Waking HF Space',icon:'🔌'},{label:'Connecting to BERT API',icon:'🌐'},{label:'Running BERT Inference',icon:'🧠'},{label:'Calculating Heuristics',icon:'🔍'},{label:'Applying Ensemble weights',icon:'📊'},{label:'Generating verdict',icon:'⚖️'}];
-    const SAMPLES=[
-      {title:'NASA Confirms Giant Asteroid',text:"NASA Confirms Giant Asteroid Will Destroy Earth on 25 December 2026! World leaders secretly building underground shelters. Classified government documents leaked! They don't want you to know!"},
-      {title:'Reserve Bank holds interest rate',text:'Reserve Bank of India holds benchmark interest rate unchanged at 6.5 percent. The Monetary Policy Committee voted unanimously on Friday. Governor Das cited easing food inflation and stable growth outlook.'}
-    ];
-
-    function Detector({initData,setInitData}){
-      const [title,setTitle]=useState(initData?.title||'');
-      const [content,setContent]=useState(initData?.content||'');
-      const [loading,setLoading]=useState(false);
-      const [step,setStep]=useState(0);
-      const [result,setResult]=useState(null);
-      const [err,setErr]=useState('');
-      const [retryMsg,setRetryMsg]=useState('');
-      const [history,setHistory]=useState([]);
-      const timerRef=useRef(null);
-
-      useEffect(()=>{if(initData){setTitle(initData.title);setContent(initData.content);setInitData(null);go(initData.title,initData.content)}},[]);
-
-      function go(t=title,c=content){
-        const tT=t.trim(),tC=c.trim();
-        if(!tC&&!tT){setErr('Please enter the article content');return;}
-        setErr('');setRetryMsg('');setLoading(true);setResult(null);setStep(0);
-        let s=0;
-        timerRef.current=setInterval(()=>{s++;if(s<STEPS.length)setStep(s);else clearInterval(timerRef.current)},700);
-        analyzeContent(tT,tC,(msg)=>setRetryMsg(msg)).then(res=>{
-          clearInterval(timerRef.current);setRetryMsg('');setStep(STEPS.length);
-          setTimeout(()=>{setLoading(false);setResult(res);setHistory(prev=>[res,...prev.filter(x=>x.title!==res.title)].slice(0,8));},300);
-        });
-      }
-
-      return(
-        <div className="page-wrap" style={{maxWidth:940}}>
-          <div className="page-header">
-            <div className="label" style={{marginBottom:5}}>DETECTOR</div>
-            <h1 className="h2">Analyze Any News Article</h1>
-            <p style={{color:'var(--tx3)',fontSize:13,marginTop:6}}>Paste a news article title and content. Results in ~15 seconds (includes model warm-up).</p>
-          </div>
-          <div className="input-wrap">
-            <input className="url-input" value={title} onChange={e=>{setTitle(e.target.value);setErr('')}} placeholder="News Headline (optional)" style={{fontSize:15,padding:8,borderBottom:'1px solid var(--b1)'}}/>
-            <textarea className="url-input" value={content} onChange={e=>{setContent(e.target.value);setErr('')}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}} placeholder="Paste article content here..." autoFocus style={{resize:'vertical',minHeight:140,padding:8,border:'none',outline:'none',background:'transparent',fontSize:14,fontFamily:'inherit',color:'inherit'}}/>
-            <button className="analyze-btn" onClick={()=>go()} disabled={loading}>{loading?'Analyzing...':'Analyze →'}</button>
-          </div>
-          {err&&<p style={{color:'var(--rd)',fontSize:13,marginBottom:'1rem',fontFamily:'var(--fm)'}}>⚠ {err}</p>}
-          {!result&&!loading&&(
-            <div style={{marginBottom:'1.5rem'}}>
-              <div className="label" style={{marginBottom:7}}>TRY A SAMPLE</div>
-              <div className="samples">{SAMPLES.map((s,i)=><button key={i} className="sample-btn" onClick={()=>{setTitle(s.title);setContent(s.text);go(s.title,s.text)}}>{s.title}</button>)}</div>
-            </div>
-          )}
-          {loading&&(
-            <div className="loader-card">
-              <div className="loader-inner">
-                <div className="spinner-wrap">
-                  <div className="spinner">
-                    <div className="spin-outer"/><div className="spin-inner"/>
-                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:19}}>{STEPS[Math.min(step,STEPS.length-1)].icon}</div>
-                  </div>
-                  <div style={{fontSize:12,color:'var(--tx3)',fontFamily:'var(--fm)'}}>{Math.round((step/STEPS.length)*100)}%</div>
-                </div>
-                <div className="steps-list">
-                  <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Running 7-phase analysis...</div>
-                  {STEPS.map((s,i)=>(
-                    <div key={i} className="step-row" style={{color:i<step?'#00ff88':i===step?'var(--tx)':'var(--tx3)'}}>
-                      <span className="step-num" style={{background:i<step?'rgba(0,255,136,.14)':i===step?'rgba(0,212,255,.14)':'var(--surf2)',color:i<step?'#00ff88':i===step?'var(--ac)':'var(--tx3)'}}>{i<step?'✓':i+1}</span>
-                      {s.label}
-                    </div>
-                  ))}
-                  {retryMsg&&<div style={{marginTop:'1rem',padding:'8px 12px',borderRadius:7,background:'rgba(0,212,255,.07)',border:'1px solid rgba(0,212,255,.2)',fontSize:12,color:'var(--ac)',fontFamily:'var(--fm)',animation:'fadeUp .3s ease'}}>{retryMsg}</div>}
-                </div>
-              </div>
-              <div className="progress-bar"><div className="progress-fill" style={{width:`${(step/STEPS.length)*100}%`}}/></div>
-            </div>
-          )}
-          {result&&!loading&&(
-            <div style={{animation:'fadeUp .5s ease'}}>
-              <div className="verdict-card" style={{border:`1px solid ${result.color}44`,backgroundImage:`radial-gradient(ellipse 60% 40% at 50% 0%,${result.color}0d 0%,transparent 70%)`}}>
-                <div style={{position:'absolute',top:-80,right:-80,width:260,height:260,borderRadius:'50%',background:`radial-gradient(circle,${result.color}0e 0%,transparent 70%)`,pointerEvents:'none'}}/>
-                <div className="verdict-inner">
-                  <div className="verdict-text">
-                    <div className="label">VERDICT</div>
-                    <div className="verdict-val" style={{color:result.color,textShadow:`0 0 40px ${result.color}44`}}>{result.verdict}</div>
-                    <div style={{fontSize:14,fontWeight:600,color:'var(--tx)',marginTop:12}}>{result.title}</div>
-                    <div className="verdict-badge" style={{background:result.color+'18',border:`1px solid ${result.color}44`,color:result.color}}>
-                      <span className="verdict-dot" style={{background:result.color}}/>{result.label}
-                    </div>
-                  </div>
-                  <ScoreRing score={result.overall} color={result.color}/>
-                </div>
-                <AiInsight result={result}/>
-              </div>
-              <div className="grid-sidebar" style={{marginBottom:'var(--gap)'}}>
-                <div className="card">
-                  <div className="h3" style={{marginBottom:'1.2rem'}}>Signal Breakdown</div>
-                  {Object.values(result.scores).map((s,i)=><SignalBar key={i} label={s.label} desc={s.desc} score={s.score}/>)}
-                </div>
-                <div className="card">
-                  <div className="h3" style={{marginBottom:'1.2rem'}}>Metadata</div>
-                  {Object.entries(result.metadata).map(([k,v])=>(
-                    <div key={k} className="meta-row">
-                      <span className="meta-key">{k}</span>
-                      <span className="meta-val" style={{color:'var(--tx)'}}>{String(v)}</span>
-                    </div>
-                  ))}
-                  <button onClick={()=>{setResult(null);setTitle('');setContent('')}} style={{marginTop:'1rem',width:'100%',padding:8,borderRadius:7,fontSize:13,fontFamily:'var(--fh)',fontWeight:600,color:'var(--tx2)',background:'var(--surf2)',border:'1px solid var(--b1)',cursor:'pointer'}}>← Analyze another article</button>
-                </div>
-              </div>
-              <div className="card">
-                <div className="h3" style={{marginBottom:'1rem'}}>Detection Signals</div>
-                <div className="sig-tags">{result.signals.map((s,i)=><SigTag key={i} type={s.type} text={s.text}/>)}</div>
-              </div>
-            </div>
-          )}
-          {history.length>0&&!loading&&!result&&(
-            <div style={{marginTop:'2rem'}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'.7rem'}}>
-                <div className="label">RECENT HISTORY</div>
-                <button onClick={()=>setHistory([])} style={{fontSize:11,color:'var(--tx3)',fontFamily:'var(--fm)',cursor:'pointer'}}>Clear</button>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                {history.slice(0,5).map((h,i)=>(
-                  <div key={i} className="hist-item" style={{borderLeft:`3px solid ${h.color}`}} onClick={()=>{setTitle(h.title);setResult(h)}}>
-                    <div className="hist-domain">{h.title}</div>
-                    <div className="hist-right"><span style={{fontSize:10,fontFamily:'var(--fm)',color:h.color}}>{h.label}</span><span style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:14,color:h.color}}>{h.overall}</span></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    const PHASES=[
-      {n:'01',title:'Content Entry',color:'#00d4ff',icon:'📝',desc:'The system accepts an article title and raw content text directly from the user.',checks:[['Title Entry','Captures the headline'],['Text Entry','Captures main body content'],['Cleaning','Normalizes whitespace and artifacts']]},
-      {n:'02',title:'BERT Inference',color:'#00ff88',icon:'🧠',desc:'The text is passed to our fine-tuned bert-base-uncased model via Gradio 5 API.',checks:[['Tokenization','Truncated and padded to 256 tokens'],['Contextual Analysis','Deep bidirectional NLP representation'],['Softmax Probability','Outputs Fake/Real probabilities']]},
-      {n:'03',title:'Heuristic Engine',color:'#ff8844',icon:'🔍',desc:'A rule-based filter scans for known misinformation red flags.',checks:[['Conspiracy Phrases','Checks against a list of 30+ known phrases'],['Caps Ratio','Flags excessive uppercase letters'],['Exclamation Density','Detects clickbait-style punctuation']]},
-      {n:'04',title:'Ensemble Combination',color:'#ffcc00',icon:'🤖',desc:'Combines both engines to mitigate individual model weaknesses.',checks:[['Weighted Voting','BERT contributes 85% to final score'],['Heuristic Boost','Heuristics contribute 15%'],['Final Confidence','Combined probability mapping']]},
-      {n:'05',title:'Verdict Output',color:'#ff3355',icon:'⚖️',desc:'The final probability determines the news credibility category.',checks:[['FAKE NEWS','Final probability > 70%'],['SUSPICIOUS','Final probability > 40%'],['REAL NEWS','Otherwise considered credible']]}
-    ];
-    const MODELS=[{name:'BERT (Fine-Tuned)',acc:96.0,type:'Deep Learning',color:'#00ff88'},{name:'BERT (Pre-Trained)',acc:87.0,type:'Baseline',color:'#00d4ff'},{name:'BART Zero-Shot',acc:80.0,type:'Reference',color:'#a855f7'}];
-    function clampN(min,max){const w=window.innerWidth;return Math.round(min+(max-min)*Math.min(Math.max((w-320)/(1100-320),0),1))}
-
-    function HowItWorks(){
-      const [ap,setAp]=useState(0);const p=PHASES[ap];
-      return(
-        <div className="page-wrap" style={{maxWidth:1100}}>
+      </div>
+      <div style={{padding:'clamp(2rem,5vw,4rem) var(--px)'}}>
+        <div className="wrap">
           <div style={{textAlign:'center',marginBottom:'2.5rem'}}>
-            <div className="label" style={{marginBottom:8}}>ARCHITECTURE</div>
-            <h1 className="h2">How TruthLens Works</h1>
-            <p style={{color:'var(--tx2)',maxWidth:520,margin:'.8rem auto 0',fontSize:14,lineHeight:1.7}}>A five-phase pipeline combining NLP and ensemble ML models.</p>
+            <div className="label" style={{marginBottom:10}}>DETECTION SYSTEM</div>
+            <h2 className="h2">Real BERT + Heuristic Ensemble</h2>
           </div>
-          <div className="phase-tabs">
-            {PHASES.map((ph,i)=><button key={i} className="phase-tab" onClick={()=>setAp(i)} style={{background:ap===i?ph.color+'22':'var(--surf)',border:`1px solid ${ap===i?ph.color+'66':'var(--b1)'}`,color:ap===i?ph.color:'var(--tx2)'}}>{ph.n}. {ph.title.split(' ')[0]}</button>)}
+          <div className="grid-auto">
+            {FEATURES.map((f,i)=>(
+              <div key={i} className="feat-card" style={{borderLeft:`3px solid ${f.color}22`}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=f.color+'55';e.currentTarget.style.transform='translateY(-3px)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=f.color+'22';e.currentTarget.style.transform='none'}}>
+                <div style={{fontSize:'clamp(22px,4vw,28px)',marginBottom:10}}>{f.icon}</div>
+                <div style={{fontFamily:'var(--fh)',fontWeight:700,fontSize:'clamp(13px,2vw,15px)',marginBottom:7,color:f.color}}>{f.title}</div>
+                <div style={{fontSize:13,color:'var(--tx2)',lineHeight:1.65}}>{f.desc}</div>
+              </div>
+            ))}
           </div>
-          <div className="phase-detail" style={{border:`1px solid ${p.color}33`}}>
-            <div className="phase-detail-inner">
-              <div>
-                <div style={{display:'flex',alignItems:'center',gap:11,marginBottom:'.8rem'}}>
-                  <span style={{fontSize:28}}>{p.icon}</span>
-                  <div><div style={{fontFamily:'var(--fm)',fontSize:10,color:p.color,letterSpacing:'.1em'}}>PHASE {p.n}</div><h2 className="h3" style={{fontSize:'clamp(16px,3vw,20px)'}}>{p.title}</h2></div>
-                </div>
-                <p style={{color:'var(--tx2)',lineHeight:1.7,fontSize:14}}>{p.desc}</p>
-              </div>
-              <div>
-                {p.checks.map(([l,d],i)=>(
-                  <div key={i} className="check-row" style={{animationDelay:`${i*.05}s`}}>
-                    <span style={{color:p.color,fontSize:13,marginTop:2,flexShrink:0}}>✓</span>
-                    <div><div className="check-label">{l}</div><div className="check-desc">{d}</div></div>
-                  </div>
-                ))}
-              </div>
+        </div>
+      </div>
+      <div style={{background:'var(--surf)',borderTop:'1px solid var(--b1)',borderBottom:'1px solid var(--b1)',padding:'2.5rem var(--px)'}}>
+        <div className="wrap">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.2rem',flexWrap:'wrap',gap:8}}>
+            <div><div className="label" style={{marginBottom:4}}>LIVE FEED</div><h2 className="h3">Recent Analyses</h2></div>
+            <div style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--tx3)',fontFamily:'var(--fm)'}}>
+              <span style={{width:6,height:6,borderRadius:'50%',background:'#00ff88',animation:'pulse 2s infinite',display:'inline-block'}}/>LIVE
             </div>
           </div>
-          <div style={{marginBottom:'2.5rem'}}>
-            <h2 className="h3" style={{textAlign:'center',marginBottom:'1.2rem',fontSize:'clamp(15px,3vw,18px)'}}>Detection Pipeline</h2>
-            <div className="pipeline-scroll">
-              {PHASES.map((ph,i)=>(
-                <React.Fragment key={i}>
-                  <div className="pipeline-node" style={{border:`1px solid ${ap===i?ph.color+'66':'var(--b1)'}`,transform:ap===i?'translateY(-4px)':'none'}} onClick={()=>setAp(i)}>
-                    <div style={{fontSize:clampN(16,22),marginBottom:5}}>{ph.icon}</div>
-                    <div style={{fontFamily:'var(--fm)',fontSize:9,color:ph.color,letterSpacing:'.1em',marginBottom:3}}>PHASE {ph.n}</div>
-                    <div style={{fontSize:clampN(9,11),fontWeight:500,lineHeight:1.3}}>{ph.title}</div>
-                  </div>
-                  {i<PHASES.length-1&&<div className="pipeline-arrow">→</div>}
-                </React.Fragment>
+          <div className="grid-auto">
+            {LFEED.map((r,i)=>(
+              <div key={i} className="feed-item" style={{borderLeft:`3px solid ${r.color}`,animationDelay:`${i*.06}s`}}>
+                <div style={{minWidth:0}}>
+                  <div style={{fontFamily:'var(--fm)',fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--tx)'}}>{r.title}</div>
+                  <div style={{fontSize:10,fontFamily:'var(--fm)',marginTop:2,color:r.color}}>{r.label}</div>
+                </div>
+                <div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--fh)',fontWeight:800,fontSize:13,background:r.color+'18',border:`2px solid ${r.color}44`,color:r.color,flexShrink:0}}>{r.score}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{padding:'clamp(2rem,5vw,4rem) var(--px)'}}>
+        <div className="wrap">
+          <div className="cta-card">
+            <div className="cta-orb"/>
+            <h2 className="h2" style={{marginBottom:'.8rem',fontSize:'clamp(1.4rem,4vw,2rem)'}}>Start verifying news now</h2>
+            <p style={{color:'var(--tx2)',marginBottom:'1.8rem',fontSize:14}}>Powered by real BERT. Free, no account required.</p>
+            <button className="cta-btn" onClick={()=>setPage('detect')}>Detect Fake News →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const STEPS=[
+  {label:'Preparing text',icon:'📝'},
+  {label:'Waking HF Space (may take 30s)',icon:'🔌'},
+  {label:'Sending to BERT API',icon:'📡'},
+  {label:'BERT running inference',icon:'🧠'},
+  {label:'Heuristic scoring',icon:'🔍'},
+  {label:'Ensemble combination',icon:'📊'},
+  {label:'Generating verdict',icon:'⚖️'}
+];
+const SAMPLES=[
+  {title:'NASA Confirms Giant Asteroid',text:"NASA Confirms Giant Asteroid Will Destroy Earth on 25 December 2026! World leaders secretly building underground shelters. Classified government documents leaked! They don't want you to know!"},
+  {title:'Reserve Bank holds interest rate',text:'Reserve Bank of India holds benchmark interest rate unchanged at 6.5 percent. The Monetary Policy Committee voted unanimously on Friday. Governor Das cited easing food inflation and stable growth outlook.'},
+  {title:'Bill Gates Admits Microchips in Vaccines',text:'Underground sources confirm global conspiracy. Mainstream media hiding this bombshell! Banned video resurfaces! Share before they delete it! Wake up people!'},
+  {title:'ISRO launches NVS-02 satellite',text:'The satellite launched aboard GSLV-F15 from Sriharikota marking the 16th consecutive successful mission for the space agency. ISRO confirmed all systems nominal.'}
+];
+
+function Detector({initData,setInitData}){
+  const [title,setTitle]=useState(initData?.title||'');
+  const [content,setContent]=useState(initData?.content||'');
+  const [loading,setLoading]=useState(false);
+  const [step,setStep]=useState(0);
+  const [result,setResult]=useState(null);
+  const [err,setErr]=useState('');
+  const [statusMsg,setStatusMsg]=useState('');
+  const [history,setHistory]=useState([]);
+  const timerRef=useRef(null);
+
+  useEffect(()=>{if(initData){setTitle(initData.title);setContent(initData.content);setInitData(null);go(initData.title,initData.content)}},[]);
+
+  function go(t=title,c=content){
+    const tT=t.trim(),tC=c.trim();
+    if(!tC&&!tT){setErr('Please enter article title or content');return;}
+    if((tC+tT).length<15){setErr('Text too short — please add more content');return;}
+    setErr('');setStatusMsg('');setLoading(true);setResult(null);setStep(0);
+    let s=0;
+    timerRef.current=setInterval(()=>{s++;if(s<STEPS.length)setStep(s);else clearInterval(timerRef.current)},1200);
+    analyzeArticle(tT,tC,(msg)=>setStatusMsg(msg)).then(res=>{
+      clearInterval(timerRef.current);setStep(STEPS.length);
+      setTimeout(()=>{setLoading(false);setResult(res);setHistory(prev=>[res,...prev.filter(x=>x.title!==res.title)].slice(0,8));},300);
+    });
+  }
+
+  return(
+    <div className="page-wrap" style={{maxWidth:940}}>
+      <div style={{marginBottom:'1.8rem'}}>
+        <div className="label" style={{marginBottom:5}}>DETECTOR</div>
+        <h1 className="h2">Analyze Any News Article</h1>
+        <p style={{color:'var(--tx3)',fontSize:13,marginTop:6}}>
+          Uses real BERT model on HuggingFace Spaces. If Space is sleeping, allow 30s warm-up.
+        </p>
+      </div>
+
+      {/* Space warm-up tip */}
+      <div className="offline-banner" style={{marginBottom:'1rem'}}>
+        💡 <strong>Tip:</strong> If this is the first analysis, the HF Space may need ~30 seconds to wake up.
+        If it fails, <a href="https://pankajkr07-fakenewsdetector.hf.space" target="_blank">open the Space directly</a> first, wait for "Running" status, then come back and analyze.
+      </div>
+
+      <div className="input-box">
+        <input className="txt-input" value={title} onChange={e=>{setTitle(e.target.value);setErr('')}} placeholder="News Headline (optional)" style={{borderBottom:'1px solid var(--b1)',paddingBottom:8}}/>
+        <textarea className="txt-input" value={content} onChange={e=>{setContent(e.target.value);setErr('')}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}} placeholder="Paste article content here..." autoFocus style={{resize:'vertical',minHeight:140,border:'none',outline:'none',background:'transparent',color:'inherit'}}/>
+        <button className="analyze-btn" onClick={()=>go()} disabled={loading}>{loading?'Analyzing...':'Analyze →'}</button>
+      </div>
+      {err&&<p style={{color:'var(--rd)',fontSize:13,marginBottom:'1rem',fontFamily:'var(--fm)'}}>⚠ {err}</p>}
+
+      {!result&&!loading&&(
+        <div style={{marginBottom:'1.5rem'}}>
+          <div className="label" style={{marginBottom:7}}>TRY A SAMPLE</div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {SAMPLES.map((s,i)=><button key={i} className="sample-btn" onClick={()=>{setTitle(s.title);setContent(s.text);go(s.title,s.text)}}>{s.title}</button>)}
+          </div>
+        </div>
+      )}
+
+      {loading&&(
+        <div className="loader-card">
+          <div style={{display:'flex',gap:'clamp(1rem,3vw,2rem)',alignItems:'flex-start',flexWrap:'wrap'}}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12,flexShrink:0}}>
+              <div className="spinner">
+                <div className="spin-outer"/><div className="spin-inner"/>
+                <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:19}}>{STEPS[Math.min(step,STEPS.length-1)].icon}</div>
+              </div>
+              <div style={{fontSize:12,color:'var(--tx3)',fontFamily:'var(--fm)'}}>{Math.round((step/STEPS.length)*100)}%</div>
+            </div>
+            <div style={{flex:1,minWidth:180}}>
+              <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Running BERT analysis...</div>
+              {STEPS.map((s,i)=>(
+                <div key={i} className="step-row" style={{color:i<step?'#00ff88':i===step?'var(--tx)':'var(--tx3)'}}>
+                  <span className="step-num" style={{background:i<step?'rgba(0,255,136,.14)':i===step?'rgba(0,212,255,.14)':'var(--surf2)',color:i<step?'#00ff88':i===step?'var(--ac)':'var(--tx3)'}}>{i<step?'✓':i+1}</span>
+                  {s.label}
+                </div>
               ))}
+              {statusMsg&&(
+                <div style={{marginTop:'1rem',padding:'8px 12px',borderRadius:7,background:'rgba(0,212,255,.07)',border:'1px solid rgba(0,212,255,.2)',fontSize:12,color:'var(--ac)',fontFamily:'var(--fm)',animation:'fadeUp .3s ease'}}>
+                  {statusMsg}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="progress-bar"><div className="progress-fill" style={{width:`${(step/STEPS.length)*100}%`}}/></div>
+        </div>
+      )}
+
+      {result&&!loading&&(
+        <div style={{animation:'fadeUp .5s ease'}}>
+          {!result.isBERT&&(
+            <div className="offline-banner">
+              ⚠️ <strong>Fallback mode:</strong> BERT model was unavailable. Results are from the heuristic engine only.
+              For full BERT analysis, <a href="https://pankajkr07-fakenewsdetector.hf.space" target="_blank">wake the HF Space</a> and try again.
+            </div>
+          )}
+          {result.isBERT&&(
+            <div style={{background:'rgba(0,255,136,.06)',border:'1px solid rgba(0,255,136,.2)',borderRadius:10,padding:'10px 14px',marginBottom:'1rem',fontSize:12,color:'var(--gn)',fontFamily:'var(--fm)'}}>
+              ✅ Real BERT model used — bert-base-uncased fine-tuned on WELFake
+            </div>
+          )}
+          <div className="verdict-card" style={{border:`1px solid ${result.color}44`,backgroundImage:`radial-gradient(ellipse 60% 40% at 50% 0%,${result.color}0d 0%,transparent 70%)`}}>
+            <div style={{position:'absolute',top:-80,right:-80,width:260,height:260,borderRadius:'50%',background:`radial-gradient(circle,${result.color}0e 0%,transparent 70%)`,pointerEvents:'none'}}/>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'1.5rem',flexWrap:'wrap'}}>
+              <div style={{flex:1,minWidth:160}}>
+                <div className="label">VERDICT</div>
+                <div className="verdict-val" style={{color:result.color,textShadow:`0 0 40px ${result.color}44`}}>{result.verdict}</div>
+                <div style={{fontSize:14,fontWeight:600,color:'var(--tx)',marginTop:12}}>{result.title}</div>
+                <div className="verdict-badge" style={{background:result.color+'18',border:`1px solid ${result.color}44`,color:result.color}}>
+                  <span style={{width:5,height:5,borderRadius:'50%',background:result.color,display:'inline-block'}}/>{result.label}
+                </div>
+              </div>
+              <ScoreRing score={result.overall} color={result.color}/>
+            </div>
+            <AiInsight result={result}/>
+          </div>
+          <div className="grid-sidebar" style={{marginBottom:'var(--gap)'}}>
+            <div className="card">
+              <div className="h3" style={{marginBottom:'1.2rem'}}>Signal Breakdown</div>
+              {Object.values(result.scores).map((s,i)=><SignalBar key={i} label={s.label} desc={s.desc} score={s.score}/>)}
+            </div>
+            <div className="card">
+              <div className="h3" style={{marginBottom:'1.2rem'}}>Metadata</div>
+              {Object.entries(result.metadata).map(([k,v])=>(
+                <div key={k} className="meta-row">
+                  <span style={{color:'var(--tx3)',flexShrink:0,fontSize:12}}>{k}</span>
+                  <span style={{fontFamily:'var(--fm)',fontSize:11,textAlign:'right',wordBreak:'break-all',color:'var(--tx)'}}>{String(v)}</span>
+                </div>
+              ))}
+              <button onClick={()=>{setResult(null);setTitle('');setContent('');}} style={{marginTop:'1rem',width:'100%',padding:8,borderRadius:7,fontSize:13,fontFamily:'var(--fh)',fontWeight:600,color:'var(--tx2)',background:'var(--surf2)',border:'1px solid var(--b1)',cursor:'pointer'}}>← Analyze another</button>
             </div>
           </div>
           <div className="card">
-            <h2 className="h3" style={{marginBottom:'1.3rem',fontSize:'clamp(15px,3vw,18px)'}}>Model Performance</h2>
-            <div style={{overflowX:'auto'}}>
-              <div style={{minWidth:320}}>
-                {MODELS.map((m,i)=>(
-                  <div key={i} className="model-row" style={{borderBottom:i<MODELS.length-1?'1px solid var(--b1)':'none'}}>
-                    <div style={{fontWeight:500,fontSize:13}}>{m.name}</div>
-                    <div className="model-type" style={{fontSize:11,color:m.color,fontFamily:'var(--fm)'}}>{m.type}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:9}}>
-                      <div style={{flex:1,height:4,background:'var(--b1)',borderRadius:2,overflow:'hidden',minWidth:60}}>
-                        <div style={{height:'100%',width:m.acc+'%',background:m.color,borderRadius:2}}/>
-                      </div>
-                      <span style={{fontFamily:'var(--fm)',fontSize:12,color:m.color,fontWeight:600,width:44,flexShrink:0}}>{m.acc}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="h3" style={{marginBottom:'1rem'}}>Detection Signals</div>
+            <div className="sig-tags">{result.signals.map((s,i)=><SigTag key={i} type={s.type} text={s.text}/>)}</div>
           </div>
         </div>
-      );
-    }
+      )}
 
-    // Pure CSS bar chart data
-    const MDATA=[{m:'Oct',real:3200,fake:1100,sus:620},{m:'Nov',real:3800,fake:1400,sus:750},{m:'Dec',real:3500,fake:1600,sus:680},{m:'Jan',real:4200,fake:1800,sus:900},{m:'Feb',real:4600,fake:2100,sus:1100},{m:'Mar',real:5100,fake:2400,sus:1200}];
-    const CATDATA=[{n:'Politics',v:38,c:'#ff3355'},{n:'Health',v:24,c:'#ff8844'},{n:'Science',v:14,c:'#00d4ff'},{n:'Finance',v:12,c:'#ffcc00'},{n:'Sports',v:8,c:'#00ff88'},{n:'Other',v:4,c:'#a855f7'}];
-    const ACCDATA=[{m:'Oct',a:94.2},{m:'Nov',a:95.8},{m:'Dec',a:96.1},{m:'Jan',a:97.3},{m:'Feb',a:98.4},{m:'Mar',a:99.1}];
-    const TDOMS=[{d:'infowarsalert.com',c:2341,r:98},{d:'realnewstoday.biz',c:1876,r:94},{d:'truenews24.info',c:1654,r:91},{d:'breakingnewsus.net',c:1432,r:89},{d:'patriotnewsflash.co',c:1201,r:87}];
-
-    function PureBarChart(){
-      const maxVal=Math.max(...MDATA.map(d=>d.real+d.fake+d.sus));
-      return(
-        <div>
-          <div className="bar-chart">
-            {MDATA.map((d,i)=>(
-              <div key={i} className="bar-group">
-                <div className="bars">
-                  <div className="bar" style={{height:(d.real/maxVal*110)+'px',background:'#00ff8888'}} title={`Real: ${d.real}`}/>
-                  <div className="bar" style={{height:(d.fake/maxVal*110)+'px',background:'#ff335588'}} title={`Fake: ${d.fake}`}/>
-                  <div className="bar" style={{height:(d.sus/maxVal*110)+'px',background:'#ff884488'}} title={`Sus: ${d.sus}`}/>
+      {history.length>0&&!loading&&!result&&(
+        <div style={{marginTop:'2rem'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'.7rem'}}>
+            <div className="label">RECENT HISTORY</div>
+            <button onClick={()=>setHistory([])} style={{fontSize:11,color:'var(--tx3)',fontFamily:'var(--fm)',cursor:'pointer'}}>Clear</button>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {history.slice(0,5).map((h,i)=>(
+              <div key={i} className="hist-item" style={{borderLeft:`3px solid ${h.color}`}} onClick={()=>{setTitle(h.title);setResult(h);}}>
+                <div style={{fontFamily:'var(--fm)',fontSize:12,color:'var(--tx2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',minWidth:0}}>{h.title}</div>
+                <div style={{display:'flex',alignItems:'center',gap:9,flexShrink:0}}>
+                  <span style={{fontSize:10,fontFamily:'var(--fm)',color:h.color}}>{h.isBERT?'🧠':''} {h.label}</span>
+                  <span style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:14,color:h.color}}>{h.overall}</span>
                 </div>
-                <div className="bar-label">{d.m}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PHASES=[
+  {n:'01',title:'Content Entry',color:'#00d4ff',icon:'📝',desc:'User provides article title and content text.',checks:[['Title','Captures headline'],['Content','Full article body'],['Validation','Min 15 chars required']]},
+  {n:'02',title:'API Call',color:'#a855f7',icon:'📡',desc:'Frontend calls Gradio 5 SSE API on HuggingFace Spaces.',checks:[['POST /gradio_api/call/predict','Sends [title, content]'],['event_id received','Unique SSE stream ID'],['GET SSE stream','Listens for complete event']]},
+  {n:'03',title:'BERT Inference',color:'#00ff88',icon:'🧠',desc:'Real bert-base-uncased model runs inference on HuggingFace Spaces GPU/CPU.',checks:[['Tokenization','Max 256 tokens'],['Forward Pass','Bidirectional NLP'],['Softmax','Fake/Real probabilities']]},
+  {n:'04',title:'Heuristic Engine',color:'#ff8844',icon:'🔍',desc:'Rule-based filter on 31 conspiracy phrases, caps ratio, exclamation density.',checks:[['Conspiracy Phrases','31 patterns checked'],['Caps Ratio','>40% = suspicious'],['Exclamation','>10% density = clickbait']]},
+  {n:'05',title:'Ensemble & Verdict',color:'#ffcc00',icon:'⚖️',desc:'BERT (85%) + Heuristic (15%) combined. Score mapped to verdict.',checks:[['FAKE','Score < 25'],['SUSPICIOUS','25-40'],['UNVERIFIED','40-70'],['CREDIBLE','>70']]}
+];
+const MODELS=[{name:'BERT (Fine-Tuned on WELFake)',acc:96.0,type:'Production',color:'#00ff88'},{name:'BERT (Pre-Trained only)',acc:87.0,type:'Baseline',color:'#00d4ff'},{name:'Heuristic Only',acc:74.0,type:'Fallback',color:'#ff8844'}];
+
+function HowItWorks(){
+  const [ap,setAp]=useState(0);const p=PHASES[ap];
+  return(
+    <div className="page-wrap" style={{maxWidth:1100}}>
+      <div style={{textAlign:'center',marginBottom:'2.5rem'}}>
+        <div className="label" style={{marginBottom:8}}>ARCHITECTURE</div>
+        <h1 className="h2">How TruthLens Works</h1>
+        <p style={{color:'var(--tx2)',maxWidth:540,margin:'.8rem auto 0',fontSize:14,lineHeight:1.7}}>Real BERT model on HuggingFace Spaces + Heuristic Engine. Gradio 5 SSE protocol.</p>
+      </div>
+      <div className="phase-tabs">
+        {PHASES.map((ph,i)=><button key={i} className="phase-tab" onClick={()=>setAp(i)} style={{background:ap===i?ph.color+'22':'var(--surf)',border:`1px solid ${ap===i?ph.color+'66':'var(--b1)'}`,color:ap===i?ph.color:'var(--tx2)'}}>{ph.n}. {ph.title.split(' ')[0]}</button>)}
+      </div>
+      <div className="phase-detail" style={{border:`1px solid ${p.color}33`}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2rem'}}>
+          <div>
+            <div style={{display:'flex',alignItems:'center',gap:11,marginBottom:'.8rem'}}>
+              <span style={{fontSize:28}}>{p.icon}</span>
+              <div><div style={{fontFamily:'var(--fm)',fontSize:10,color:p.color,letterSpacing:'.1em'}}>PHASE {p.n}</div><h2 className="h3">{p.title}</h2></div>
+            </div>
+            <p style={{color:'var(--tx2)',lineHeight:1.7,fontSize:14}}>{p.desc}</p>
+          </div>
+          <div>{p.checks.map(([l,d],i)=>(
+            <div key={i} className="check-row">
+              <span style={{color:p.color,fontSize:13,flexShrink:0}}>✓</span>
+              <div><div style={{fontSize:13,fontWeight:500,marginBottom:2}}>{l}</div><div style={{fontSize:11,color:'var(--tx3)'}}>{d}</div></div>
+            </div>
+          ))}</div>
+        </div>
+      </div>
+      <div style={{marginBottom:'2.5rem'}}>
+        <h2 className="h3" style={{textAlign:'center',marginBottom:'1.2rem'}}>Detection Pipeline</h2>
+        <div className="pipeline-scroll">
+          {PHASES.map((ph,i)=>(
+            <React.Fragment key={i}>
+              <div className="pipeline-node" style={{border:`1px solid ${ap===i?ph.color+'66':'var(--b1)'}`,transform:ap===i?'translateY(-4px)':'none'}} onClick={()=>setAp(i)}>
+                <div style={{fontSize:20,marginBottom:5}}>{ph.icon}</div>
+                <div style={{fontFamily:'var(--fm)',fontSize:9,color:ph.color,letterSpacing:'.1em',marginBottom:3}}>PHASE {ph.n}</div>
+                <div style={{fontSize:10,fontWeight:500,lineHeight:1.3}}>{ph.title}</div>
+              </div>
+              {i<PHASES.length-1&&<div style={{color:'var(--tx3)',fontSize:14,padding:'0 4px',flexShrink:0}}>→</div>}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="card">
+        <h2 className="h3" style={{marginBottom:'1.3rem'}}>Model Performance</h2>
+        {MODELS.map((m,i)=>(
+          <div key={i} className="model-row" style={{borderBottom:i<MODELS.length-1?'1px solid var(--b1)':'none'}}>
+            <div style={{fontWeight:500,fontSize:13}}>{m.name}</div>
+            <div style={{fontSize:11,color:m.color,fontFamily:'var(--fm)'}} className="hide-sm">{m.type}</div>
+            <div style={{display:'flex',alignItems:'center',gap:9}}>
+              <div style={{flex:1,height:4,background:'var(--b1)',borderRadius:2,overflow:'hidden',minWidth:60}}><div style={{height:'100%',width:m.acc+'%',background:m.color,borderRadius:2}}/></div>
+              <span style={{fontFamily:'var(--fm)',fontSize:12,color:m.color,fontWeight:600,width:44,flexShrink:0}}>{m.acc}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const MDATA=[{m:'Oct',real:3200,fake:1100,sus:620},{m:'Nov',real:3800,fake:1400,sus:750},{m:'Dec',real:3500,fake:1600,sus:680},{m:'Jan',real:4200,fake:1800,sus:900},{m:'Feb',real:4600,fake:2100,sus:1100},{m:'Mar',real:5100,fake:2400,sus:1200}];
+const CATDATA=[{n:'Politics',v:38,c:'#ff3355'},{n:'Health',v:24,c:'#ff8844'},{n:'Science',v:14,c:'#00d4ff'},{n:'Finance',v:12,c:'#ffcc00'},{n:'Sports',v:8,c:'#00ff88'},{n:'Other',v:4,c:'#a855f7'}];
+const TDOMS=[{d:'infowarsalert.com',c:2341,r:98},{d:'realnewstoday.biz',c:1876,r:94},{d:'truenews24.info',c:1654,r:91},{d:'breakingnewsus.net',c:1432,r:89},{d:'patriotnewsflash.co',c:1201,r:87}];
+
+function Dashboard(){
+  const [live,setLive]=useState(1247832);
+  useEffect(()=>{const t=setInterval(()=>setLive(c=>c+Math.floor(Math.random()*3)+1),1800);return()=>clearInterval(t)},[]);
+  const maxV=Math.max(...MDATA.map(d=>d.real+d.fake+d.sus));
+  return(
+    <div className="page-wrap" style={{maxWidth:1100}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'1rem',marginBottom:'2rem'}}>
+        <div><div className="label" style={{marginBottom:5}}>ANALYTICS</div><h1 className="h2">Detection Dashboard</h1></div>
+        <div className="live-badge"><span className="live-dot"/>{live.toLocaleString()} analyzed</div>
+      </div>
+      <div className="grid-4" style={{marginBottom:'var(--gap)'}}>
+        {[['96.0%','BERT Accuracy','#00ff88',0.7],['~15s','Avg Time','#00d4ff',0],['64.3%','Real News %','#00ff88',2.1],['22.1%','Fake News %','#ff3355',-3.4]].map(([v,l,c,d])=>(
+          <div key={l} className="card">
+            <div className="label" style={{marginBottom:8}}>{l}</div>
+            <div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:'clamp(1.5rem,3.5vw,2rem)',color:c,letterSpacing:'-.03em',marginBottom:4}}>{v}</div>
+            {d!==0&&<div style={{fontSize:11,color:d>0?'#00ff88':'#ff3355'}}>{d>0?'↑':'↓'} {Math.abs(d)}% vs last month</div>}
+          </div>
+        ))}
+      </div>
+      <div className="grid-2" style={{marginBottom:'var(--gap)'}}>
+        <div className="chart-card">
+          <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Monthly Volume</div>
+          <div className="bar-wrap">
+            {MDATA.map((d,i)=>(
+              <div key={i} className="bar-grp">
+                <div className="bars-inner">
+                  <div className="bar" style={{height:(d.real/maxV*100)+'px',background:'#00ff8877'}}/>
+                  <div className="bar" style={{height:(d.fake/maxV*100)+'px',background:'#ff335577'}}/>
+                  <div className="bar" style={{height:(d.sus/maxV*100)+'px',background:'#ff884477'}}/>
+                </div>
+                <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--tx3)',marginTop:4}}>{d.m}</div>
               </div>
             ))}
           </div>
           <div className="legend">
-            {[['#00ff88','Real'],['#ff3355','Fake'],['#ff8844','Suspicious']].map(([c,l])=><span key={l} style={{display:'flex',alignItems:'center',gap:5}}><span className="legend-dot" style={{background:c}}/>{l}</span>)}
+            {[['#00ff88','Real'],['#ff3355','Fake'],['#ff8844','Suspicious']].map(([c,l])=><span key={l} style={{display:'flex',alignItems:'center'}}><span className="legend-dot" style={{background:c}}/>{l}</span>)}
           </div>
         </div>
-      );
-    }
-
-    function AccuracyLine(){
-      const w=220,h=80,pad=10;
-      const vals=ACCDATA.map(d=>d.a);
-      const min=92,max=100;
-      const pts=vals.map((v,i)=>[pad+i*(w-pad*2)/(vals.length-1),(h-pad)-(v-min)/(max-min)*(h-pad*2)]);
-      const d='M'+pts.map(p=>p.join(',')).join(' L');
-      const area=d+` L${pts[pts.length-1][0]},${h-pad} L${pts[0][0]},${h-pad} Z`;
-      return(
-        <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{overflow:'visible'}}>
-          <defs><linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00d4ff" stopOpacity=".2"/><stop offset="100%" stopColor="#00d4ff" stopOpacity="0"/></linearGradient></defs>
-          <path d={area} fill="url(#ag2)"/>
-          <path d={d} fill="none" stroke="#00d4ff" strokeWidth={2}/>
-          {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r={3} fill="#00d4ff"/>)}
-          {ACCDATA.map((d,i)=><text key={i} x={pts[i][0]} y={h} fill="#4a5a6a" fontSize={8} textAnchor="middle">{d.m}</text>)}
-        </svg>
-      );
-    }
-
-    function Dashboard(){
-      const [live,setLive]=useState(1247832);
-      useEffect(()=>{const t=setInterval(()=>setLive(c=>c+Math.floor(Math.random()*3)+1),1800);return()=>clearInterval(t)},[]);
-      return(
-        <div className="page-wrap" style={{maxWidth:1100}}>
-          <div className="dash-header">
-            <div><div className="label" style={{marginBottom:5}}>ANALYTICS</div><h1 className="h2">Detection Dashboard</h1></div>
-            <div className="live-badge"><span className="live-dot"/>{live.toLocaleString()} analyzed</div>
-          </div>
-          <div className="grid-4" style={{marginBottom:'var(--gap)'}}>
-            {[['99.1%','Accuracy','#00ff88',0.7],['2.6s','Avg Speed','#00d4ff',-12],['64.3%','Real News %','#00ff88',2.1],['22.1%','Fake News %','#ff3355',-3.4]].map(([v,l,c,d])=>(
-              <div key={l} className="card">
-                <div className="label" style={{marginBottom:8}}>{l}</div>
-                <div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:'clamp(1.5rem,3.5vw,2rem)',color:c,letterSpacing:'-.03em',marginBottom:4}}>{v}</div>
-                <div style={{fontSize:11,color:d>0?'#00ff88':'#ff3355'}}>{d>0?'↑':'↓'} {Math.abs(d)}% vs last month</div>
+        <div className="chart-card">
+          <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Fake News by Category</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
+            {CATDATA.map((c,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{width:8,height:8,borderRadius:'50%',background:c.c,display:'inline-block',flexShrink:0}}/>
+                <span style={{fontSize:12,color:'var(--tx2)',flex:1}}>{c.n}</span>
+                <div style={{width:80,height:4,background:'var(--b1)',borderRadius:2,overflow:'hidden'}}><div style={{height:'100%',width:c.v+'%',background:c.c,borderRadius:2}}/></div>
+                <span style={{fontFamily:'var(--fm)',fontSize:11,color:c.c,width:28,textAlign:'right'}}>{c.v}%</span>
               </div>
             ))}
           </div>
-          <div className="grid-2" style={{marginBottom:'var(--gap)'}}>
-            <div className="chart-card">
-              <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Monthly Volume</div>
-              <PureBarChart/>
-            </div>
-            <div className="chart-card">
-              <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Fake News by Category</div>
-              <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:8}}>
-                {CATDATA.map((c,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{width:8,height:8,borderRadius:'50%',background:c.c,display:'inline-block',flexShrink:0}}/>
-                    <span style={{fontSize:12,color:'var(--tx2)',flex:1}}>{c.n}</span>
-                    <div style={{width:100,height:4,background:'var(--b1)',borderRadius:2,overflow:'hidden'}}>
-                      <div style={{height:'100%',width:c.v+'%',background:c.c,borderRadius:2}}/>
-                    </div>
-                    <span style={{fontFamily:'var(--fm)',fontSize:11,color:c.c,width:28,textAlign:'right'}}>{c.v}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="chart-card" style={{marginBottom:'var(--gap)'}}>
-            <div className="h3" style={{marginBottom:'1rem',fontSize:14}}>Accuracy Trend (6 months)</div>
-            <AccuracyLine/>
-          </div>
-          <div className="card">
-            <div className="h3" style={{marginBottom:'1.2rem',fontSize:14}}>Top Flagged Domains</div>
-            <div style={{overflowX:'auto'}}>
-              <table className="flag-table">
-                <thead><tr>{['Domain','Checks','Fake Rate','Status'].map(h=><th key={h} className="flag-th">{h.toUpperCase()}</th>)}</tr></thead>
-                <tbody>
-                  {TDOMS.map((d,i)=>(
-                    <tr key={i}>
-                      <td className="flag-td" style={{fontFamily:'var(--fm)',color:'var(--rd)',minWidth:160}}>{d.d}</td>
-                      <td className="flag-td" style={{color:'var(--tx2)'}}>{d.c.toLocaleString()}</td>
-                      <td className="flag-td">
-                        <div style={{display:'flex',alignItems:'center',gap:7,minWidth:100}}>
-                          <div style={{flex:1,height:3,background:'var(--b1)',borderRadius:2,minWidth:40}}><div style={{height:'100%',width:d.r+'%',background:'var(--rd)',borderRadius:2}}/></div>
-                          <span style={{fontFamily:'var(--fm)',fontSize:11,color:'var(--rd)',flexShrink:0}}>{d.r}%</span>
-                        </div>
-                      </td>
-                      <td className="flag-td"><span className="flag-badge">BLACKLISTED</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
-      );
-    }
-
-    function About({setPage}){
-      const tech=[['ML / AI',['BERT','PyTorch','HuggingFace','Gradio 5','WELFake']],['Backend',['Python','FastAPI','Redis','PostgreSQL','Celery']],['Frontend',['React','Vanilla JS','SVG Charts','DM Sans']],['Datasets',['WELFake Dataset','LIAR Dataset','FakeNewsNet','BuzzFeed News']]];
-      const tl=[['Jan 2024','Project inception & dataset collection'],['Mar 2024','First model trained — 82% accuracy'],['May 2024','Cross-source verification engine live'],['Aug 2024','Ensemble model reaches 95% accuracy'],['Nov 2024','LLM reasoning layer integrated'],['Mar 2025','Production launch — 99.1% accuracy']];
-      const team=[{n:'Pankaj Kumar',r:'Full Stack Developer',b:'UI',c:'#a855f7'},{n:'Ankit Kumar',r:'Backend Architect',b:'API',c:'#00d4ff'},{n:'Amit Yadav',r:'Dataset Specialist',b:'ML',c:'#00ff88'},{n:'Satyarthi Prakash',r:'Data Processing',b:'NLP',c:'#ff8844'},{n:'Md Fardin',r:'Research & Tester',b:'R&T',c:'#ffcc00'}];
-      return(
-        <div className="page-wrap" style={{maxWidth:1100}}>
-          <div style={{maxWidth:680,marginBottom:'3rem'}}>
-            <div className="label" style={{marginBottom:9}}>MISSION</div>
-            <h1 className="h1" style={{marginBottom:'1rem',fontSize:'clamp(1.8rem,5vw,2.8rem)'}}>Fighting Misinformation with{' '}<span style={{background:'linear-gradient(135deg,#00d4ff,#00ff88)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>Machine Intelligence</span></h1>
-            <p style={{color:'var(--tx2)',fontSize:15,lineHeight:1.8,marginBottom:'.8rem'}}>TruthLens was built from a simple belief: in the age of viral misinformation, everyone deserves a fast, reliable way to verify what they read before they share it.</p>
-          </div>
-          <div className="grid-3" style={{marginBottom:'3rem'}}>
-            {[['6B+','Fake news shares per day globally','#ff3355'],['78%','People struggle to identify misinformation','#ff8844'],['$78B','Annual economic cost of fake news','#ffcc00']].map(([s,l,c])=>(
-              <div key={s} className="stat-card">
-                <div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:'clamp(1.6rem,4vw,2.1rem)',color:c,letterSpacing:'-.03em',marginBottom:8}}>{s}</div>
-                <div style={{fontSize:12,color:'var(--tx2)',lineHeight:1.5}}>{l}</div>
-              </div>
-            ))}
-          </div>
-          <div className="grid-2" style={{marginBottom:'3rem'}}>
-            <div>
-              <h2 className="h3" style={{fontSize:'clamp(15px,3vw,18px)',marginBottom:'1.2rem'}}>Technology Stack</h2>
-              <div style={{display:'flex',flexDirection:'column',gap:'.8rem'}}>
-                {tech.map(([cat,items])=>(
-                  <div key={cat} className="card">
-                    <div className="label" style={{marginBottom:8}}>{cat}</div>
-                    <div style={{display:'flex',flexWrap:'wrap',gap:5}}>{items.map(item=><span key={item} className="tech-chip">{item}</span>)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h2 className="h3" style={{fontSize:'clamp(15px,3vw,18px)',marginBottom:'1.2rem'}}>Development Timeline</h2>
-              <div style={{position:'relative',paddingLeft:18}}>
-                <div style={{position:'absolute',left:5,top:8,bottom:8,width:1,background:'var(--b1)'}}/>
-                {tl.map(([date,ev],i)=>(
-                  <div key={i} style={{position:'relative',marginBottom:'1.3rem',animation:`slideIn .3s ease ${i*.08}s both`}}>
-                    <div className="tl-dot" style={{background:i===tl.length-1?'#00ff88':'var(--b2)',border:`2px solid ${i===tl.length-1?'#00ff88':'var(--b1)'}`}}/>
-                    <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--tx3)',marginBottom:3,letterSpacing:'.05em'}}>{date}</div>
-                    <div style={{fontSize:13,color:i===tl.length-1?'#00ff88':'var(--tx)'}}>{ev}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={{marginBottom:'3rem'}}>
-            <h2 className="h3" style={{fontSize:'clamp(15px,3vw,18px)',marginBottom:'1.2rem'}}>Team</h2>
-            <div className="grid-4">
-              {team.map((m,i)=>(
-                <div key={i} className="team-card" onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.borderColor=m.c+'44'}} onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.borderColor='var(--b1)'}}>
-                  <div className="avatar" style={{background:m.c+'22',border:`2px solid ${m.c}44`,color:m.c}}>{m.b}</div>
-                  <div style={{fontWeight:600,fontSize:13,marginBottom:3}}>{m.n}</div>
-                  <div style={{fontSize:11,color:'var(--tx3)'}}>{m.r}</div>
-                </div>
+      </div>
+      <div className="card">
+        <div className="h3" style={{marginBottom:'1.2rem',fontSize:14}}>Top Flagged Domains</div>
+        <div style={{overflowX:'auto'}}>
+          <table className="flag-table">
+            <thead><tr>{['Domain','Checks','Fake Rate','Status'].map(h=><th key={h} className="flag-th">{h.toUpperCase()}</th>)}</tr></thead>
+            <tbody>
+              {TDOMS.map((d,i)=>(
+                <tr key={i}>
+                  <td className="flag-td" style={{fontFamily:'var(--fm)',color:'var(--rd)',minWidth:140}}>{d.d}</td>
+                  <td className="flag-td" style={{color:'var(--tx2)'}}>{d.c.toLocaleString()}</td>
+                  <td className="flag-td"><div style={{display:'flex',alignItems:'center',gap:7}}><div style={{flex:1,height:3,background:'var(--b1)',borderRadius:2,minWidth:40}}><div style={{height:'100%',width:d.r+'%',background:'var(--rd)',borderRadius:2}}/></div><span style={{fontFamily:'var(--fm)',fontSize:11,color:'var(--rd)',flexShrink:0}}>{d.r}%</span></div></td>
+                  <td className="flag-td"><span className="flag-badge">BLACKLISTED</span></td>
+                </tr>
               ))}
-            </div>
-          </div>
-          <div className="cta-card" style={{maxWidth:'100%'}}>
-            <div className="cta-orb"/>
-            <h2 className="h2" style={{fontSize:'clamp(1.4rem,4vw,1.9rem)',marginBottom:'.8rem'}}>Ready to detect fake news?</h2>
-            <p style={{color:'var(--tx2)',marginBottom:'1.8rem',fontSize:14}}>Free, instant, no account required.</p>
-            <button className="cta-btn" onClick={()=>setPage('detect')}>Start Detecting →</button>
-          </div>
+            </tbody>
+          </table>
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
-    function App(){
-      const [page,setPage]=useState('home');
-      const [initData,setInitData]=useState(null);
-      useEffect(()=>window.scrollTo(0,0),[page]);
-      const pages={home:<Home setPage={setPage} setInitData={setInitData}/>,detect:<Detector initData={initData} setInitData={setInitData}/>,how:<HowItWorks/>,dashboard:<Dashboard/>,about:<About setPage={setPage}/>};
-      return(
-        <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
-          <Navbar page={page} setPage={setPage}/>
-          <main style={{flex:1}}>{pages[page]||pages.home}</main>
+function About({setPage}){
+  const tech=[['ML / AI',['bert-base-uncased','PyTorch','HuggingFace Transformers','WELFake Dataset','Gradio 5']],['Backend',['Python 3.10','Gradio 5','HuggingFace Spaces','SSE Protocol']],['Frontend',['React 18','Gradio 5 SSE Client','CSS Grid','DM Sans + Syne']],['Detection',['Heuristic Engine','31 Conspiracy Phrases','Caps Ratio Analysis','Ensemble Voting']]];
+  const tl=[['Jan 2024','Project inception & WELFake dataset collection'],['Mar 2024','BERT fine-tuning — 82% accuracy'],['May 2024','Heuristic engine added'],['Aug 2024','Ensemble reaches 96% accuracy'],['Nov 2024','Gradio 5 SSE API integration'],['Mar 2025','Production on HuggingFace Spaces']];
+  const team=[{n:'Pankaj Kumar',r:'Full Stack Developer',b:'UI',c:'#a855f7'},{n:'Ankit Kumar',r:'Backend Architect',b:'API',c:'#00d4ff'},{n:'Amit Yadav',r:'Dataset Specialist',b:'ML',c:'#00ff88'},{n:'Satyarthi Prakash',r:'Data Processing',b:'NLP',c:'#ff8844'},{n:'Md Fardin',r:'Research & Tester',b:'R&T',c:'#ffcc00'}];
+  return(
+    <div className="page-wrap" style={{maxWidth:1100}}>
+      <div style={{maxWidth:680,marginBottom:'3rem'}}>
+        <div className="label" style={{marginBottom:9}}>MISSION</div>
+        <h1 className="h1" style={{marginBottom:'1rem',fontSize:'clamp(1.8rem,5vw,2.8rem)'}}>Fighting Misinformation with{' '}<span style={{background:'linear-gradient(135deg,#00d4ff,#00ff88)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>Machine Intelligence</span></h1>
+        <p style={{color:'var(--tx2)',fontSize:15,lineHeight:1.8}}>TruthLens uses a real BERT model fine-tuned on 72,134 articles from the WELFake dataset. In the age of viral misinformation, everyone deserves a fast, reliable way to verify what they read.</p>
+      </div>
+      <div className="grid-3" style={{marginBottom:'3rem'}}>
+        {[['6B+','Fake news shares per day globally','#ff3355'],['78%','People struggle to identify misinformation','#ff8844'],['$78B','Annual economic cost of fake news','#ffcc00']].map(([s,l,c])=>(
+          <div key={s} className="stat-card"><div style={{fontFamily:'var(--fh)',fontWeight:800,fontSize:'clamp(1.6rem,4vw,2.1rem)',color:c,letterSpacing:'-.03em',marginBottom:8}}>{s}</div><div style={{fontSize:12,color:'var(--tx2)',lineHeight:1.5}}>{l}</div></div>
+        ))}
+      </div>
+      <div className="grid-2" style={{marginBottom:'3rem'}}>
+        <div>
+          <h2 className="h3" style={{marginBottom:'1.2rem'}}>Technology Stack</h2>
+          <div style={{display:'flex',flexDirection:'column',gap:'.8rem'}}>
+            {tech.map(([cat,items])=>(
+              <div key={cat} className="card"><div className="label" style={{marginBottom:8}}>{cat}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{items.map(item=><span key={item} className="tech-chip">{item}</span>)}</div></div>
+            ))}
+          </div>
         </div>
-      );
-    }
-    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-  </script>
+        <div>
+          <h2 className="h3" style={{marginBottom:'1.2rem'}}>Development Timeline</h2>
+          <div style={{position:'relative',paddingLeft:18}}>
+            <div style={{position:'absolute',left:5,top:8,bottom:8,width:1,background:'var(--b1)'}}/>
+            {tl.map(([date,ev],i)=>(
+              <div key={i} style={{position:'relative',marginBottom:'1.3rem',animation:`slideIn .3s ease ${i*.08}s both`}}>
+                <div className="tl-dot" style={{background:i===tl.length-1?'#00ff88':'var(--b2)',border:`2px solid ${i===tl.length-1?'#00ff88':'var(--b1)'}`}}/>
+                <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--tx3)',marginBottom:3}}>{date}</div>
+                <div style={{fontSize:13,color:i===tl.length-1?'#00ff88':'var(--tx)'}}>{ev}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{marginBottom:'3rem'}}>
+        <h2 className="h3" style={{marginBottom:'1.2rem'}}>Team</h2>
+        <div className="grid-4">
+          {team.map((m,i)=>(
+            <div key={i} className="team-card" onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.borderColor=m.c+'44'}} onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.borderColor='var(--b1)'}}>
+              <div className="avatar" style={{background:m.c+'22',border:`2px solid ${m.c}44`,color:m.c}}>{m.b}</div>
+              <div style={{fontWeight:600,fontSize:13,marginBottom:3}}>{m.n}</div>
+              <div style={{fontSize:11,color:'var(--tx3)'}}>{m.r}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="cta-card" style={{maxWidth:'100%'}}>
+        <div className="cta-orb"/>
+        <h2 className="h2" style={{fontSize:'clamp(1.4rem,4vw,1.9rem)',marginBottom:'.8rem'}}>Ready to detect fake news?</h2>
+        <p style={{color:'var(--tx2)',marginBottom:'1.8rem',fontSize:14}}>Free, instant, real BERT model. No account required.</p>
+        <button className="cta-btn" onClick={()=>setPage('detect')}>Start Detecting →</button>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [page,setPage]=useState('home');
+  const [initData,setInitData]=useState(null);
+  useEffect(()=>window.scrollTo(0,0),[page]);
+  const pages={home:<Home setPage={setPage} setInitData={setInitData}/>,detect:<Detector initData={initData} setInitData={setInitData}/>,how:<HowItWorks/>,dashboard:<Dashboard/>,about:<About setPage={setPage}/>};
+  return(
+    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
+      <Navbar page={page} setPage={setPage}/>
+      <main style={{flex:1}}>{pages[page]||pages.home}</main>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
