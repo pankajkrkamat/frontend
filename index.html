@@ -150,13 +150,13 @@ const {useState,useEffect,useRef}=React;
 // HuggingFace Spaces allow browser CORS for gradio_api endpoints
 // ═══════════════════════════════════════════════════════════════════
 const HF_SPACE = 'https://pankajkr07-fakenewsdetector.hf.space';
-const API_ENDPOINT = HF_SPACE + '/gradio_api/call/predict';
+const API_ENDPOINT = HF_SPACE + '/call/predict';
 
 async function callBERT(title, content, onStatus) {
   // Step 1: Wake up the Space
   onStatus('🔌 Waking HF Space...');
   try {
-    await fetch(HF_SPACE + '/gradio_api/info', { method: 'GET', mode: 'cors' });
+    await fetch(HF_SPACE + '/info', { method: 'GET', mode: 'cors' });
   } catch(e) {
     try { await fetch(HF_SPACE, { method: 'GET', mode: 'no-cors' }); } catch {}
   }
@@ -465,14 +465,14 @@ function Navbar({page,setPage}){
   );
 }
 
-const TICKER=['Real BERT model — bert-base-uncased','Fine-tuned on WELFake Dataset (72K articles)','Rule-based Conspiracy Heuristic Engine','Ensemble: BERT 85% + Heuristic 15%','Gradio 5 SSE API integration'];
+const TICKER=['Real BERT model — bert-base-uncased','Fine-tuned on WELFake Dataset (72K articles)','Rule-based Conspiracy Heuristic Engine','Ensemble: BERT 85% + Heuristic 15%','Gradio 4 SSE API integration'];
 const FEATURES=[
   {icon:'🧠',title:'Real BERT Model',desc:'bert-base-uncased fine-tuned on WELFake Dataset (72,134 articles). Runs on HuggingFace Spaces.',color:'#00ff88'},
   {icon:'📝',title:'Title & Content',desc:'Paste headline and full article text for maximum accuracy.',color:'#00d4ff'},
   {icon:'🔍',title:'Heuristic Engine',desc:'36+ conspiracy phrases, caps ratio, exclamation density — same as backend.',color:'#ff8844'},
   {icon:'📊',title:'Ensemble Scoring',desc:'BERT 85% + Heuristic 15% — proven formula from WELFake research.',color:'#ffcc00'},
   {icon:'🔄',title:'Smart Fallback',desc:'If BERT API is sleeping, browser-based heuristic model activates automatically.',color:'#ff3355'},
-  {icon:'⚡',title:'Gradio 5 API',desc:'Uses SSE-based /gradio_api/call/predict — the correct Gradio 5 protocol.',color:'#a855f7'},
+  {icon:'⚡',title:'Gradio 5 API',desc:'Uses SSE-based /call/predict — the correct Gradio 5 protocol.',color:'#a855f7'},
 ];
 const LFEED=[{title:'NASA Confirms Giant Asteroid',label:'FAKE',score:8,color:'#ff3355'},{title:'Reserve Bank holds interest rate',label:'CREDIBLE',score:94,color:'#00ff88'},{title:'Bill Gates Admits Microchips',label:'FAKE',score:11,color:'#ff3355'},{title:'ISRO launches NVS-02 satellite',label:'CREDIBLE',score:97,color:'#00ff88'}];
 
@@ -736,7 +736,7 @@ function Detector({initData,setInitData}){
 
 const PHASES=[
   {n:'01',title:'Content Entry',color:'#00d4ff',icon:'📝',desc:'User provides article title and content text.',checks:[['Title','Captures headline'],['Content','Full article body'],['Validation','Min 15 chars required']]},
-  {n:'02',title:'API Call',color:'#a855f7',icon:'📡',desc:'Frontend calls Gradio 5 SSE API on HuggingFace Spaces.',checks:[['POST /gradio_api/call/predict','Sends [title, content]'],['event_id received','Unique SSE stream ID'],['GET SSE stream','Listens for complete event']]},
+  {n:'02',title:'API Call',color:'#a855f7',icon:'📡',desc:'Frontend calls Gradio 4 SSE API on HuggingFace Spaces.',checks:[['POST /call/predict','Sends [title, content]'],['event_id received','Unique SSE stream ID'],['GET SSE stream','Listens for complete event']]},
   {n:'03',title:'BERT Inference',color:'#00ff88',icon:'🧠',desc:'Real bert-base-uncased model runs inference on HuggingFace Spaces GPU/CPU.',checks:[['Tokenization','Max 256 tokens'],['Forward Pass','Bidirectional NLP'],['Softmax','Fake/Real probabilities']]},
   {n:'04',title:'Heuristic Engine',color:'#ff8844',icon:'🔍',desc:'Rule-based filter on 31 conspiracy phrases, caps ratio, exclamation density.',checks:[['Conspiracy Phrases','31 patterns checked'],['Caps Ratio','>40% = suspicious'],['Exclamation','>10% density = clickbait']]},
   {n:'05',title:'Ensemble & Verdict',color:'#ffcc00',icon:'⚖️',desc:'BERT (85%) + Heuristic (15%) combined. Score mapped to verdict.',checks:[['FAKE','Score < 25'],['SUSPICIOUS','25-40'],['UNVERIFIED','40-70'],['CREDIBLE','>70']]}
@@ -884,7 +884,7 @@ function Dashboard(){
 
 function About({setPage}){
   const tech=[['ML / AI',['bert-base-uncased','PyTorch','HuggingFace Transformers','WELFake Dataset','Gradio 5']],['Backend',['Python 3.10','Gradio 5','HuggingFace Spaces','SSE Protocol']],['Frontend',['React 18','Gradio 5 SSE Client','CSS Grid','DM Sans + Syne']],['Detection',['Heuristic Engine','31 Conspiracy Phrases','Caps Ratio Analysis','Ensemble Voting']]];
-  const tl=[['Jan 2024','Project inception & WELFake dataset collection'],['Mar 2024','BERT fine-tuning — 82% accuracy'],['May 2024','Heuristic engine added'],['Aug 2024','Ensemble reaches 96% accuracy'],['Nov 2024','Gradio 5 SSE API integration'],['Mar 2025','Production on HuggingFace Spaces']];
+  const tl=[['Jan 2024','Project inception & WELFake dataset collection'],['Mar 2024','BERT fine-tuning — 82% accuracy'],['May 2024','Heuristic engine added'],['Aug 2024','Ensemble reaches 96% accuracy'],['Nov 2024','Gradio 4 SSE API integration'],['Mar 2025','Production on HuggingFace Spaces']];
   const team=[{n:'Pankaj Kumar',r:'Full Stack Developer',b:'UI',c:'#a855f7'},{n:'Ankit Kumar',r:'Backend Architect',b:'API',c:'#00d4ff'},{n:'Amit Yadav',r:'Dataset Specialist',b:'ML',c:'#00ff88'},{n:'Satyarthi Prakash',r:'Data Processing',b:'NLP',c:'#ff8844'},{n:'Md Fardin',r:'Research & Tester',b:'R&T',c:'#ffcc00'}];
   return(
     <div className="page-wrap" style={{maxWidth:1100}}>
